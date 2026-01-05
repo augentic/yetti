@@ -74,11 +74,7 @@ impl<R: Handler<P>, P: Provider> PreHandler<R, P> {
 pub struct RequestHandler<R, O, P> {
     request: R,
     headers: HeaderMap<String>,
-
-    /// The owning tenant/namespace.
     owner: O,
-
-    /// The provider to use while handling of the request.
     provider: P,
 }
 
