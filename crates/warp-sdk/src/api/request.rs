@@ -10,6 +10,7 @@
 use std::error::Error;
 use std::fmt::Debug;
 use std::future::{Future, IntoFuture};
+use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -18,65 +19,66 @@ use http::HeaderMap;
 use crate::api::reply::Reply;
 use crate::api::{Body, Client, Provider};
 
-/// Request handler.
-///
-/// The primary role of this trait is to provide a common interface for
-/// requests so they can be handled by [`handle`] method.
-pub trait Handler<P: Provider>: Sized {
+/// Trait to provide a common interface for request handling.
+pub trait Handler<P: Provider>: Decode {
     /// The output type of the handler.
     type Output: Body;
 
     /// The error type returned by the handler.
-    type Error: Error + 'static + Send + Sync;
+    type Error: Error + Send + Sync;
 
-    fn from_bytes(bytes: &[u8]) -> Result<RequestOnly<Self, P>, Self::Error> {
-        let x = Self::decode(bytes)?;
-        Ok(RequestOnly::new(x))
+    /// Initialize a request handler from request bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the message cannot be decoded.
+    fn handler(bytes: &[u8]) -> Result<PreHandler<Self, P>, Self::Error>
+    where
+        Self::Error: From<Self::DecodeError>,
+    {
+        let request = Self::decode(bytes)?;
+        Ok(PreHandler::new(request))
     }
+
+    /// Implemented by the request handler to process the request.
+    fn handle(
+        self, ctx: Context<P>,
+    ) -> impl Future<Output = Result<Reply<Self::Output>, Self::Error>> + Send;
+}
+
+/// Trait for messages that can be decoded and built into handlers
+pub trait Decode: Sized {
+    type DecodeError: Error;
 
     /// Decode the message into a request handler.
     ///
     /// # Errors
     ///
     /// Returns an error if the message cannot be decoded.
-    fn decode(bytes: &[u8]) -> Result<Self, Self::Error> {
-        todo!()
-    }
-
-    /// Routes the message to the concrete handler used to process the message.
-    fn handle(
-        self, ctx: Context<P>,
-    ) -> impl Future<Output = Result<Reply<Self::Output>, Self::Error>> + Send;
+    fn decode(bytes: &[u8]) -> Result<Self, Self::DecodeError>;
 }
 
-// /// Trait for messages that can be decoded and built into handlers
-// pub trait Decode: Sized {
-//     type DecodeError: Error + Send + Sync + 'static;
+pub struct PreHandler<R: Handler<P>, P: Provider> {
+    request: R,
+    provider: PhantomData<P>,
+}
 
-//     /// Decode the message into a request handler.
-//     ///
-//     /// # Errors
-//     ///
-//     /// Returns an error if the message cannot be decoded.
-//     fn decode(bytes: &[u8]) -> Result<Self, Self::DecodeError> {
-//         todo!()
-//     }
-// }
+impl<R: Handler<P>, P: Provider> PreHandler<R, P> {
+    pub const fn new(request: R) -> Self {
+        Self {
+            request,
+            provider: PhantomData,
+        }
+    }
 
-/// Request-scoped context passed to [`Handler::handle`].
-///
-/// Bundles common request inputs (owner, provider, headers) into a single
-/// parameter, making handler signatures more ergonomic and easier to extend.
-#[derive(Clone, Copy, Debug)]
-pub struct Context<'a, P: Provider> {
-    /// The owning tenant / namespace for the request.
-    pub owner: &'a str,
-
-    /// The provider implementation used to fulfill the request.
-    pub provider: &'a P,
-
-    /// Request headers (typed).
-    pub headers: &'a HeaderMap<String>,
+    pub fn provider(self, provider: P) -> RequestHandler<R, P> {
+        RequestHandler {
+            request: self.request,
+            headers: HeaderMap::default(),
+            provider: Arc::new(provider),
+            owner: Arc::<str>::from(""),
+        }
+    }
 }
 
 /// Request router.
@@ -216,31 +218,18 @@ where
     }
 }
 
-// ----------------------------------------------------------------------------
-// RequestOnly
-// ----------------------------------------------------------------------------
+/// Request-scoped context passed to [`Handler::handle`].
+///
+/// Bundles common request inputs (owner, provider, headers) into a single
+/// parameter, making handler signatures more ergonomic and easier to extend.
+#[derive(Clone, Copy, Debug)]
+pub struct Context<'a, P: Provider> {
+    /// The owning tenant / namespace for the request.
+    pub owner: &'a str,
 
-use std::marker::PhantomData;
+    /// The provider implementation used to fulfill the request.
+    pub provider: &'a P,
 
-pub struct RequestOnly<R: Handler<P>, P: Provider> {
-    request: R,
-    provider: PhantomData<P>,
-}
-
-impl<R: Handler<P>, P: Provider> RequestOnly<R, P> {
-    pub fn new(request: R) -> Self {
-        Self {
-            request,
-            provider: PhantomData,
-        }
-    }
-
-    pub fn provider(self, provider: P) -> RequestHandler<R, P> {
-        RequestHandler {
-            request: self.request,
-            headers: HeaderMap::default(),
-            provider: Arc::new(provider),
-            owner: Arc::<str>::from(""),
-        }
-    }
+    /// Request headers (typed).
+    pub headers: &'a HeaderMap<String>,
 }
