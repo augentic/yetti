@@ -20,7 +20,10 @@ use crate::api::reply::Reply;
 use crate::api::{Body, Client, Provider};
 
 /// Trait to provide a common interface for request handling.
-pub trait Handler<P: Provider>: Decode {
+pub trait Handler<P: Provider>: TryFrom<Self::Input> {
+    /// The raw input type of the handler.
+    type Input;
+
     /// The output type of the handler.
     type Output: Body;
 
@@ -32,31 +35,18 @@ pub trait Handler<P: Provider>: Decode {
     /// # Errors
     ///
     /// Returns an error if the message cannot be decoded.
-    fn handler(encoded: Self::Encoded) -> Result<PreHandler<Self, P>, Self::Error>
+    fn handler(input: Self::Input) -> Result<PreHandler<Self, P>, <Self as Handler<P>>::Error>
     where
-        Self::Error: From<Self::DecodeError>,
+        <Self as Handler<P>>::Error: From<<Self as TryFrom<Self::Input>>::Error>,
     {
-        let request = Self::decode(encoded)?;
+        let request = Self::try_from(input)?;
         Ok(PreHandler::new(request))
     }
 
     /// Implemented by the request handler to process the request.
     fn handle(
         self, ctx: Context<P>,
-    ) -> impl Future<Output = Result<Reply<Self::Output>, Self::Error>> + Send;
-}
-
-/// Trait for messages that can be decoded and built into handlers
-pub trait Decode: Sized {
-    type Encoded;
-    type DecodeError: Error;
-
-    /// Decode the message into a request handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the message cannot be decoded.
-    fn decode(encoded: Self::Encoded) -> Result<Self, Self::DecodeError>;
+    ) -> impl Future<Output = Result<Reply<Self::Output>, <Self as Handler<P>>::Error>> + Send;
 }
 
 pub struct PreHandler<R: Handler<P>, P: Provider> {
@@ -190,7 +180,7 @@ where
     ///
     /// Returns the error from the underlying handler on failure.
     #[inline]
-    pub async fn handle(self) -> Result<Reply<R::Output>, R::Error> {
+    pub async fn handle(self) -> Result<Reply<R::Output>, <R as Handler<P>>::Error> {
         let ctx = Context {
             owner: &self.owner,
             provider: &*self.provider,
@@ -208,12 +198,12 @@ where
     R: Handler<P> + Send + 'static,
 {
     type IntoFuture = Pin<Box<dyn Future<Output = Self::Output> + Send + 'static>>;
-    type Output = Result<Reply<R::Output>, R::Error>;
+    type Output = Result<Reply<R::Output>, <R as Handler<P>>::Error>;
 
     fn into_future(self) -> Self::IntoFuture
     where
         R::Output: Body,
-        R::Error: Send,
+        <R as Handler<P>>::Error: Send,
     {
         Box::pin(self.handle())
     }
