@@ -6,6 +6,19 @@ Unreleased
 
 ### Changed
 
+<!-- Release notes generated using configuration in .github/release.yaml at main -->
+
+## What's Changed
+* Bump to 0.20.0 by @github-actions[bot] in https://github.com/augentic/warp/pull/144
+* Post-split by @andrewweston in https://github.com/augentic/warp/pull/145
+* fix missing deps by @andrewweston in https://github.com/augentic/warp/pull/146
+* Http Interface by @andrewweston in https://github.com/augentic/warp/pull/147
+* Bump to 0.21.0 by @github-actions[bot] in https://github.com/augentic/warp/pull/148
+* Guest Macro by @andrewweston in https://github.com/augentic/warp/pull/149
+
+
+**Full Changelog**: https://github.com/augentic/warp/compare/v0.20.1...v0.22.0
+
 ---
 
 Release notes for previous releases can be found on the respective release
