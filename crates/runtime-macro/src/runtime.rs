@@ -37,11 +37,13 @@ impl Parse for Config {
         }
 
         // deduplicate backends
-        let mut backend_set = HashSet::new();
+        let mut backends= vec![];
         for host in &hosts.0 {
-            backend_set.insert(&host.backend);
+            if backends.contains(&host.backend) {
+                continue;
+            }
+            backends.push(host.backend.clone());
         }
-        let backends = backend_set.into_iter().cloned().collect();
 
         Ok(Self {
             gen_main: main,
