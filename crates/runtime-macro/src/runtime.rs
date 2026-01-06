@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{LitBool, Path, Result, Token};
@@ -37,7 +35,7 @@ impl Parse for Config {
         }
 
         // deduplicate backends
-        let mut backends= vec![];
+        let mut backends = vec![];
         for host in &hosts.0 {
             if backends.contains(&host.backend) {
                 continue;
