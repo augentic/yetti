@@ -37,7 +37,7 @@ impl Parse for Config {
         // deduplicate backends
         let mut backends = vec![];
         for host in &hosts.0 {
-            if backends.contains(&host.backend) {
+            if backends.iter().any(|b: &Path| b.get_ident() == host.backend.get_ident()) {
                 continue;
             }
             backends.push(host.backend.clone());
