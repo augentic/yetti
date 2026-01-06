@@ -1,11 +1,103 @@
-//! Request routing and handler traits.
+//! # Request Handler API
 //!
-//! This module contains:
-//! - [`Handler`]: implemented by request types to produce a [`Reply`]
-//! - [`RequestHandler`]: a small request builder / router (supports `.headers(...)`)
+//! This module uses the [typestate pattern](https://cliffle.com/blog/rust-typestate/) to ensure
+//! requests are properly configured at compile time. The type system prevents you from executing
+//! a request without first setting all required components (owner, provider, and request).
 //!
-//! The main entry point is usually [`crate::Client`], re-exported from the
-//! top-level `api` module.
+//! ### Valid State Transitions
+//!
+//! ```text
+//! RequestHandler<NoRequest, NoOwner, NoProvider>
+//!   → .owner("alice")  → RequestHandler<NoRequest, OwnerSet, NoProvider>
+//!   → .provider(p)     → RequestHandler<NoRequest, OwnerSet, ProviderSet<P>>
+//!   → .request(r)      → RequestHandler<RequestSet<R,P>, OwnerSet, ProviderSet<P>>
+//!   → .handle().await  → Result<Reply<R::Output>, R::Error>
+//! ```
+//!
+//! You can set these in any order (except `.handle()` which must be last), and you can
+//! add `.headers()` at any point in the chain.
+//!
+//!
+//! ### Example: From Raw Request (Recommended)
+//!
+//! The [`Client`] provides a more convenient API that sets owner and provider upfront:
+//!
+//! ```rust,ignore
+//! use warp_sdk::Client;
+//!
+//! // Create a client with owner and provider
+//! let client = Client::new("alice").provider(my_provider);
+//!
+//! // Simple request - await directly (IntoFuture)
+//! let response = R9kRequest::handler(bytes)?
+//!     .owner("alice")
+//!     .provider(my_provider)
+//!     .await?;
+//!
+//! // Or explicitly call `handle()`
+//! let response = Request::handler(body.to_vec())?
+//!        .provider(my_provider)
+//!        .owner("owner")
+//!        .handle()
+//!        .await?;
+//! ```
+//!
+//! ### Example: Using [`RequestHandler`] Directly
+//!
+//! ```rust,ignore
+//! use warp_sdk::api::{RequestHandler, Handler};
+//!
+//! // Manual construction with typestate safety
+//! let response = RequestHandler::new()
+//!     .owner("alice")
+//!     .provider(my_provider)
+//!     .request(my_request)
+//!     .headers(my_headers)  // Optional
+//!     .handle()
+//!     .await?;
+//! ```
+//!
+//! ### Example: Using Client
+//!
+//! The [`Client`] provides a more convenient API that sets owner and provider upfront:
+//! ```rust,ignore
+//! use warp_sdk::Client;
+//!
+//! // Create a client with owner and provider
+//! let client = Client::new("alice").provider(my_provider);
+//!
+//! // Simple request - await directly (IntoFuture)
+//! let response = client.request(my_request).await?;
+//!
+//! // Request with headers
+//! let response = client
+//!     .request(my_request)
+//!     .headers(my_headers)
+//!     .await?;
+//!
+//! // Or explicitly call handle()
+//! let response = client
+//!     .request(my_request)
+//!     .headers(my_headers)
+//!     .handle()
+//!     .await?;
+//! ```
+//!
+//! ### Compile-Time Safety
+//!
+//! The typestate pattern ensures these errors are caught at compile time:
+//! ```rust,compile_fail,ignore
+//! // ❌ Cannot handle without all required fields
+//! RequestHandler::new().handle().await?;  // Won't compile!
+//!
+//! // ❌ Cannot handle without provider
+//! RequestHandler::new()
+//!     .owner("alice")
+//!     .request(my_request)
+//!     .handle().await?;  // Won't compile!
+//! ```
+//!
+//! Only when all required fields are set does `.handle()` become available.
 
 use std::error::Error;
 use std::fmt::Debug;
@@ -20,11 +112,9 @@ use crate::api::reply::Reply;
 use crate::api::{Body, Client, Provider};
 
 pub type Request<R, P> = RequestHandler<RequestSet<R, P>, NoOwner, NoProvider>;
-pub type HanderError<R, P> = <R as Handler<P>>::Error;
-// pub type HanderResult<T, R, P> = Result<T, <R as Handler<P>>::Error>;
 
 /// Trait to provide a common interface for request handling.
-pub trait Handler<P: Provider>: TryFrom<Self::Input, Error = HanderError<Self, P>> {
+pub trait Handler<P: Provider>: Sized {
     /// The raw input type of the handler.
     type Input;
 
@@ -34,13 +124,22 @@ pub trait Handler<P: Provider>: TryFrom<Self::Input, Error = HanderError<Self, P
     /// The error type returned by the handler.
     type Error: Error + Send + Sync;
 
-    /// Initialize a request handler from request bytes.
+    /// Parse the input into a `[Handler]` instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the input cannot be parsed.
+    fn from_input(input: Self::Input) -> Result<Self, Self::Error>;
+
+    /// Initialize a `[RequestHandler]` from raw request.
     ///
     /// # Errors
     ///
     /// Returns an error if the message cannot be decoded.
-    fn handler(input: Self::Input) -> Result<Request<Self, P>, HanderError<Self, P>> {
-        let request = Self::try_from(input)?;
+    fn handler(
+        input: Self::Input,
+    ) -> Result<RequestHandler<RequestSet<Self, P>, NoOwner, NoProvider>, Self::Error> {
+        let request = Self::from_input(input)?;
         let handler = RequestHandler::new().request(request);
         Ok(handler)
     }
@@ -48,8 +147,26 @@ pub trait Handler<P: Provider>: TryFrom<Self::Input, Error = HanderError<Self, P
     /// Implemented by the request handler to process the request.
     fn handle(
         self, ctx: Context<P>,
-    ) -> impl Future<Output = Result<Reply<Self::Output>, HanderError<Self, P>>> + Send;
+    ) -> impl Future<Output = Result<Reply<Self::Output>, Self::Error>> + Send;
 }
+
+/// Marker type indicating no owner has been set yet.
+pub struct NoOwner;
+
+/// Marker type indicating the owner has been set.
+pub struct OwnerSet(Arc<str>);
+
+/// Marker type indicating no provider has been set yet.
+pub struct NoProvider;
+
+/// Marker type indicating the provider has been set.
+pub struct ProviderSet<P: Provider>(Arc<P>);
+
+/// Marker type indicating no request has been set yet.
+pub struct NoRequest;
+
+/// Marker type wrapping a request that has been set.
+pub struct RequestSet<R: Handler<P>, P: Provider>(R, PhantomData<P>);
 
 /// Request router.
 ///
@@ -63,15 +180,6 @@ pub struct RequestHandler<R, O, P> {
     owner: O,
     provider: P,
 }
-
-pub struct NoOwner;
-pub struct OwnerSet(Arc<str>);
-
-pub struct NoProvider;
-pub struct ProviderSet<P: Provider>(Arc<P>);
-
-pub struct NoRequest;
-pub struct RequestSet<R: Handler<P>, P: Provider>(R, PhantomData<P>);
 
 impl Default for RequestHandler<NoRequest, NoOwner, NoProvider> {
     fn default() -> Self {
@@ -138,7 +246,7 @@ impl<O, P> RequestHandler<NoRequest, O, P> {
     {
         RequestHandler {
             request: RequestSet(request, PhantomData),
-            headers: HeaderMap::default(),
+            headers: self.headers,
             owner: self.owner,
             provider: self.provider,
         }
