@@ -1,197 +1,135 @@
-# buildgen
+# guest-macro
 
-Procedural macros for generating WebAssembly Component Initiator infrastructure.
+Procedural macros for generating WebAssembly guest infrastructure.
 
 ## Overview
 
-This crate provides the `runtime!` macro that generates the necessary runtime infrastructure for executing WebAssembly components with WASI capabilities. Instead of manually managing feature flags and conditional compilation, you declaratively specify which WASI interfaces and backends your runtime needs.
+This crate provides the `guest!` macro that generates the necessary guest infrastructure for WebAssembly components with WASI capabilities. Instead of manually implementing HTTP handlers and messaging consumers, you declaratively specify your routes and topics.
 
 ## Usage
 
-Add `buildgen` to your dependencies:
+Add `guest-macro` to your dependencies:
 
 ```toml
 [dependencies]
-buildgen = { workspace = true }
+guest-macro = { workspace = true }
 ```
 
-Then use the `runtime!` macro to generate your runtime infrastructure:
+Then use the `guest!` macro to generate your guest infrastructure:
 
 ```rust
-use buildgen::runtime;
+use guest_macro::guest;
 
-// Import the backend types you want to use
-use wasi_http::WasiHttpCtx;
-use wasi_otel::DefaultOtel;
-use be_mongodb::Client as MongoDb;
-use be_nats::Client as Nats;
-use be_azure::Client as Azure;
-
-// Generate runtime infrastructure
-runtime!({
-    "http": WasiHttpCtx,
-    "otel": DefaultOtel,
-    "blobstore": MongoDb,
-    "keyvalue": Nats,
-    "messaging": Nats,
-    "vault": Azure
+guest!({
+    owner: "my-org",
+    provider: MyProvider,
+    http: [
+        "/api/users": get(GetUsersRequest, GetUsersResponse),
+        "/api/users": post(CreateUserRequest with_body, CreateUserResponse),
+        "/api/search": get(SearchRequest with_query, SearchResponse),
+        "/api/users/{user_id}": get(GetUserRequest, GetUserResponse),
+    ],
+    messaging: [
+        "user-events.v1": UserEventMessage,
+        "notifications.v1": NotificationMessage,
+    ]
 });
-
-// The macro generates:
-// - RuntimeContext struct with backend connections
-// - RuntimeStoreCtx struct with per-instance contexts
-// - State trait implementation
-// - WASI view trait implementations
-// - runtime_run() function
 ```
 
 ## Configuration Format
 
-The macro accepts a map-like syntax:
+The macro accepts a struct-like syntax with the following fields:
+
+### Required Fields
+
+- **`owner`**: A string literal identifying the owner/organization
+- **`provider`**: An identifier for the provider type that implements the necessary traits
+
+### Optional Fields
+
+- **`http`**: An array of HTTP route definitions
+- **`messaging`**: An array of messaging topic definitions
+
+## HTTP Routes
+
+HTTP routes are defined with the syntax:
 
 ```rust
-runtime!({
-    "interface_name": BackendType,
-    // ...
-});
+"/path": method(RequestType, ResponseType)
 ```
 
-### Supported Interfaces
+### Supported Methods
 
-- **`http`**: HTTP client and server
-  - Backend: `WasiHttpCtx` (marker type, no backend connection needed)
+- `get(Request, Response)` - GET request handler
+- `post(Request, Response)` - POST request handler
 
-- **`otel`**: OpenTelemetry observability
-  - Backend: `DefaultOtel` (connects to OTEL collector)
+### Request Modifiers
 
-- **`blobstore`**: Object/blob storage
-  - Backends: `MongoDb` or `Nats`
+- `with_query` - For GET requests, indicates the request type should be populated from query parameters
+- `with_body` - For POST requests, indicates the request should include the raw body bytes
 
-- **`keyvalue`**: Key-value storage
-  - Backends: `Nats` or `Redis`
+### Path Parameters
 
-- **`messaging`**: Pub/sub messaging
-  - Backends: `Nats` or `Kafka`
+Path parameters use curly brace syntax and are automatically extracted:
 
-- **`vault`**: Secrets management
-  - Backend: `Azure` (Azure Key Vault)
+```rust
+"/users/{user_id}/posts/{post_id}": get(GetPostRequest, GetPostResponse)
+```
 
-- **`sql`**: SQL database
-  - Backend: `Postgres`
+## Messaging Topics
 
-- **`identity`**: Identity and authentication
-  - Backend: `Azure` (Azure Identity)
+Messaging topics are defined with the syntax:
 
-- **`websockets`**: WebSocket connections
-  - Backend: `WebSocketsCtxImpl` (default implementation for development use)
+```rust
+"topic-name.version": MessageType
+```
+
+The macro generates handlers that match incoming messages by topic name.
 
 ## Generated Code
 
-The macro generates the following:
+The macro generates the following modules under `#[cfg(target_arch = "wasm32")]`:
 
-### RuntimeContext
+### HTTP Module (`mod http`)
 
-A struct holding pre-instantiated components and backend connections:
+- Implements `wasip3::exports::http::handler::Guest` trait
+- Sets up an Axum router with all defined routes
+- Generates async handler functions for each route with OpenTelemetry instrumentation
 
-```rust
-#[derive(Clone)]
-struct RuntimeContext {
-    instance_pre: InstancePre<RuntimeStoreCtx>,
-    // ... backend fields
-}
-```
+### Messaging Module (`mod messaging`)
 
-### RuntimeStoreCtx
+- Implements `wasi_messaging::incoming_handler::Guest` trait
+- Routes incoming messages to appropriate handlers based on topic
+- Generates async processor functions with OpenTelemetry instrumentation
 
-Per-instance data shared between the WebAssembly runtime and host functions:
+## Example
 
 ```rust
-pub struct RuntimeStoreCtx {
-    pub table: ResourceTable,
-    pub wasi: WasiCtx,
-    // ... interface context fields
-}
-```
+use guest_macro::guest;
 
-### State Trait Implementation
+// Define your provider
+struct MyProvider;
 
-Implements the `State` trait from the `runtime` crate, providing methods to create new store contexts and access the pre-instantiated component.
-
-### WASI View Implementations
-
-Implements view traits for each configured WASI interface, allowing the WebAssembly guest to call host functions.
-
-### runtime_run() Function
-
-A public async function that:
-
-1. Loads runtime configuration
-2. Compiles the WebAssembly component
-3. Links WASI interfaces
-4. Connects to backends
-5. Starts server interfaces (HTTP, messaging, WebSockets)
-
-## Example: Custom Initiator Configuration
-
-You can create different runtime configurations for different use cases:
-
-```rust
-// Minimal HTTP server
-mod http_runtime {
-    use wasi_http::WasiHttpCtx;
-
-    warp::runtime!({
-        "http": WasiHttpCtx
-    });
+impl MyProvider {
+    fn new() -> Self {
+        Self
+    }
 }
 
-// Full-featured runtime
-mod full_runtime {
-    use wasi_http::WasiHttpCtx;
-    use wasi_otel::DefaultOtel;
-    use be_nats::Client as Nats;
-
-    warp::runtime!({
-        "http": WasiHttpCtx,
-        "otel": DefaultOtel,
-        "keyvalue": Nats,
-        "messaging": Nats,
-        "blobstore": Nats
-    });
-}
+// Generate guest infrastructure
+guest!({
+    owner: "acme-corp",
+    provider: MyProvider,
+    http: [
+        "/health": get(HealthRequest, HealthResponse),
+        "/api/items/{item_id}": get(GetItemRequest, GetItemResponse),
+        "/api/items": post(CreateItemRequest with_body, CreateItemResponse),
+    ],
+    messaging: [
+        "item-events.v1": ItemEventMessage,
+    ]
+});
 ```
-
-## Migration from Feature Flags
-
-Before this macro, runtime configurations were managed through feature flags:
-
-```toml
-[features]
-credibil = ["http-default", "otel-default", "blobstore-mongodb", "keyvalue-nats", "messaging-nats", "vault-azure"]
-```
-
-Now you can declaratively specify your configuration:
-
-```rust
-#[cfg(feature = "credibil")]
-mod credibil_runtime {
-    warp::runtime!({
-        "http": WasiHttpCtx,
-        "otel": DefaultOtel,
-        "blobstore": MongoDb,
-        "keyvalue": Nats,
-        "messaging": Nats,
-        "vault": Azure
-    });
-}
-```
-
-This provides:
-
-- **Better readability**: The configuration is explicit and self-documenting
-- **Less boilerplate**: No need for complex feature flag combinations
-- **Type safety**: Backend types are checked at compile time
-- **Flexibility**: Easy to create multiple runtime configurations in the same binary
 
 ## License
 

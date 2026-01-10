@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{LitBool, Path, Result, Token};
@@ -37,11 +35,13 @@ impl Parse for Config {
         }
 
         // deduplicate backends
-        let mut backend_set = HashSet::new();
+        let mut backends = vec![];
         for host in &hosts.0 {
-            backend_set.insert(&host.backend);
+            if backends.iter().any(|b: &Path| b.get_ident() == host.backend.get_ident()) {
+                continue;
+            }
+            backends.push(host.backend.clone());
         }
-        let backends = backend_set.into_iter().cloned().collect();
 
         Ok(Self {
             gen_main: main,

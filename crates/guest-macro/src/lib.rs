@@ -5,36 +5,26 @@ mod messaging;
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
-/// Generates the guest infrastructure based on the configuration.
+/// Generates the guest infrastructure based on the specified configuration.
 ///
 /// # Example
 ///
 /// ```ignore
-/// buildgen::guest!({
+/// guest_macro::guest!({
 ///     owner: "at",
 ///     provider: MyProvider,
 ///     http: [
-///         "/some/path": {
-///             method: get,
-///             request: SomeRequest,
-///             reply: SomeResponse,
-///         }
+///         "/some/get/path": get(SomeRequest, SomeResponse),
+///         "/some/other-get/path": get(SomeRequest with_query, SomeResponse),
+///         "/some/post/path": post(SomeRequest, SomeResponse),
+///         "/some/post-body/path": post(SomeRequest with_body, SomeResponse),
 ///     ],
 ///     messaging: [
-///         "realtime-r9k.v1": {
-///             message: R9kMessage,
-///             // optional:
-///             // handler: on_realtime_r9k_v1,
-///         }
+///         "topic-name.v1": TopicMessage,
+///         "other-topic.v2": OtherTopicMessage,
 ///     ]
 /// });
 /// ```
-///
-/// ## Notes
-/// - **HTTP**: `handler` should be an Axum-compatible async handler function (the macro wires it into a `Router`).
-/// - **Messaging**: if `handler` is omitted, the macro expects a sibling async function named `on_<topic>`,
-///   with non-alphanumeric characters replaced by `_` (e.g. `"realtime-r9k.v1"` → `on_realtime_r9k_v1`).
-///   The generated code parses payload bytes via `TryFrom<&[u8]>` into `message` and then awaits the handler.
 #[proc_macro]
 pub fn guest(input: TokenStream) -> TokenStream {
     let config = parse_macro_input!(input as guest::Config);

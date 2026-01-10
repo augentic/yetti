@@ -2,7 +2,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::{Error, Ident, LitStr, Path, Result, Token};
+use syn::{Error, Ident, LitStr, Result, Token};
 
 use crate::http::{self, Http};
 use crate::messaging::{self, Messaging};
@@ -126,19 +126,15 @@ pub fn expand(config: &Config) -> TokenStream {
     }
 }
 
-/// Derive a handler method name from the request type name
-pub fn method_name(path: &Path) -> Ident {
-    let Some(ident) = path.segments.last() else {
-        return format_ident!("handle");
-    };
-
-    // get the first word of the last segment
-    let ident_str = ident.ident.to_string();
-    let new_word =
-        ident_str[1..].chars().position(char::is_uppercase).unwrap_or(ident_str.len() - 1);
-    let method_name = &ident_str[0..=new_word].to_lowercase();
-
-    format_ident!("{method_name}")
+// Derive a handler method name from an HTTP path or messaging topic.
+pub fn handler_name(path: &LitStr) -> Ident {
+    let path_str = path.value();
+    let name = path_str
+        .trim_start_matches('/')
+        .replace(['/', '-', '.'], "_")
+        .replace(['{', '}'], "")
+        .to_lowercase();
+    format_ident!("{name}")
 }
 
 #[cfg(test)]
@@ -149,20 +145,20 @@ mod tests {
 
     #[test]
     fn method_from_path() {
-        // one letter
-        let path = Path::from(format_ident!("H"));
-        let name = method_name(&path);
-        assert_eq!(name, format_ident!("h"));
+        // simple path
+        let path = LitStr::new("/inbound/xml", Span::call_site());
+        let name = handler_name(&path);
+        assert_eq!(name, format_ident!("inbound_xml"));
 
-        // one word
-        let path = Path::from(format_ident!("Hello"));
-        let name = method_name(&path);
-        assert_eq!(name, format_ident!("hello"));
+        // path parameters
+        let path = LitStr::new("/set-trip/{vehicle_id}/{trip_id}", Span::call_site());
+        let name = handler_name(&path);
+        assert_eq!(name, format_ident!("set_trip_vehicle_id_trip_id"));
 
-        // two words
-        let path = Path::from(format_ident!("HelloWorld"));
-        let name = method_name(&path);
-        assert_eq!(name, format_ident!("hello"));
+        // path with dots
+        let path = LitStr::new("/some/path/data.json", Span::call_site());
+        let name = handler_name(&path);
+        assert_eq!(name, format_ident!("some_path_data_json"));
     }
 
     #[test]
@@ -171,16 +167,10 @@ mod tests {
             owner: "at",
             provider: MyProvider,
             http: [
-                "/jobs/detector": {
-                    method: get,
-                    request: DetectionRequest,
-                    reply: DetectionReply
-                }
+                "/jobs/detector": get(DetectionRequest with_query, DetectionReply)
             ],
             messaging: [
-                "realtime-r9k.v1": {
-                    message: R9kMessage
-                }
+                "realtime-r9k.v1": R9kMessage,
             ]
         });
 
@@ -202,16 +192,13 @@ mod tests {
             owner: "at",
             provider: MyProvider,
             http: [
-                "/god-mode/set-trip/{vehicle_id}/{trip_id}": {
-                    method: get,
-                    request: SetTripRequest,
-                    reply: SetTripReply,
-                }
+                "/path/params/{vehicle_id}/{trip_id}": get(SetTripRequest, SetTripReply),
             ]
         });
 
         let parsed: Config = syn::parse2(input).expect("should parse");
         let http = parsed.http.expect("should have http");
+
         assert_eq!(http.routes.len(), 1);
         assert_eq!(http.routes[0].params.len(), 2);
         assert_eq!(http.routes[0].params[0].to_string(), "vehicle_id");

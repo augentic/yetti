@@ -113,7 +113,6 @@ use std::fmt::Debug;
 use std::future::{Future, IntoFuture};
 use std::marker::PhantomData;
 use std::pin::Pin;
-use std::sync::Arc;
 
 use http::HeaderMap;
 
@@ -163,13 +162,13 @@ pub trait Handler<P: Provider>: Sized {
 pub struct NoOwner;
 
 /// Marker type indicating the owner has been set.
-pub struct OwnerSet(Arc<str>);
+pub struct OwnerSet<'a>(&'a str);
 
 /// Marker type indicating no provider has been set yet.
 pub struct NoProvider;
 
 /// Marker type indicating the provider has been set.
-pub struct ProviderSet<P: Provider>(Arc<P>);
+pub struct ProviderSet<'a, P: Provider>(&'a P);
 
 /// Marker type indicating no request has been set yet.
 pub struct NoRequest;
@@ -214,7 +213,7 @@ impl RequestHandler<NoRequest, NoOwner, NoProvider> {
     // Internal constructor for creating a `RequestHandler` from a `Client`.
     pub(crate) fn from_client<R, P>(
         client: &Client<P>, request: R,
-    ) -> RequestHandler<RequestSet<R, P>, OwnerSet, ProviderSet<P>>
+    ) -> RequestHandler<RequestSet<R, P>, OwnerSet<'_>, ProviderSet<'_, P>>
     where
         R: Handler<P>,
         P: Provider,
@@ -222,8 +221,24 @@ impl RequestHandler<NoRequest, NoOwner, NoProvider> {
         RequestHandler {
             request: RequestSet(request, PhantomData),
             headers: HeaderMap::default(),
-            owner: OwnerSet(Arc::clone(&client.owner)),
-            provider: ProviderSet(Arc::clone(&client.provider)),
+            owner: OwnerSet(&client.owner),
+            provider: ProviderSet(&client.provider),
+        }
+    }
+}
+
+// ----------------------------------------------
+// Set Owner
+// ----------------------------------------------
+impl<R, P> RequestHandler<R, NoOwner, P> {
+    /// Set the owner (transitions typestate).
+    #[must_use]
+    pub fn owner(self, owner: &str) -> RequestHandler<R, OwnerSet<'_>, P> {
+        RequestHandler {
+            request: self.request,
+            headers: self.headers,
+            owner: OwnerSet(owner),
+            provider: self.provider,
         }
     }
 }
@@ -233,12 +248,12 @@ impl RequestHandler<NoRequest, NoOwner, NoProvider> {
 // ----------------------------------------------
 impl<R, O> RequestHandler<R, O, NoProvider> {
     /// Set the provider (transitions typestate).
-    pub fn provider<P: Provider>(self, provider: P) -> RequestHandler<R, O, ProviderSet<P>> {
+    pub fn provider<P: Provider>(self, provider: &P) -> RequestHandler<R, O, ProviderSet<'_, P>> {
         RequestHandler {
             request: self.request,
             headers: self.headers,
             owner: self.owner,
-            provider: ProviderSet(Arc::new(provider)),
+            provider: ProviderSet(provider),
         }
     }
 }
@@ -263,22 +278,6 @@ impl<O, P> RequestHandler<NoRequest, O, P> {
 }
 
 // ----------------------------------------------
-// Set Owner
-// ----------------------------------------------
-impl<R, P> RequestHandler<R, NoOwner, P> {
-    /// Set the owner (transitions typestate).
-    #[must_use]
-    pub fn owner(self, owner: impl Into<String>) -> RequestHandler<R, OwnerSet, P> {
-        RequestHandler {
-            request: self.request,
-            headers: self.headers,
-            owner: OwnerSet(Arc::from(owner.into())),
-            provider: self.provider,
-        }
-    }
-}
-
-// ----------------------------------------------
 // Headers
 // ----------------------------------------------
 impl<R, O, P> RequestHandler<R, O, P> {
@@ -293,7 +292,7 @@ impl<R, O, P> RequestHandler<R, O, P> {
 // ----------------------------------------------
 // Handle the request
 // ----------------------------------------------
-impl<R, P> RequestHandler<RequestSet<R, P>, OwnerSet, ProviderSet<P>>
+impl<R, P> RequestHandler<RequestSet<R, P>, OwnerSet<'_>, ProviderSet<'_, P>>
 where
     R: Handler<P>,
     P: Provider,
@@ -312,8 +311,8 @@ where
     #[inline]
     pub async fn handle(self) -> Result<Reply<R::Output>, <R as Handler<P>>::Error> {
         let ctx = Context {
-            owner: &self.owner.0,
-            provider: &*self.provider.0,
+            owner: self.owner.0,
+            provider: self.provider.0,
             headers: &self.headers,
         };
         self.request.0.handle(ctx).await
@@ -322,12 +321,12 @@ where
 
 // Implement [`IntoFuture`] so that the request can be awaited directly (without
 // needing to call the `handle` method).
-impl<R, P> IntoFuture for RequestHandler<RequestSet<R, P>, OwnerSet, ProviderSet<P>>
+impl<'a, R, P> IntoFuture for RequestHandler<RequestSet<R, P>, OwnerSet<'a>, ProviderSet<'a, P>>
 where
-    P: Provider + 'static,
-    R: Handler<P> + Send + 'static,
+    P: Provider + 'a,
+    R: Handler<P> + Send + 'a,
 {
-    type IntoFuture = Pin<Box<dyn Future<Output = Self::Output> + Send + 'static>>;
+    type IntoFuture = Pin<Box<dyn Future<Output = Self::Output> + Send + 'a>>;
     type Output = Result<Reply<R::Output>, <R as Handler<P>>::Error>;
 
     fn into_future(self) -> Self::IntoFuture

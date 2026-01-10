@@ -71,7 +71,7 @@ impl<P: Provider> Client<P> {
     /// Create a new [`RequestHandler`] with no headers.
     pub fn request<R: Handler<P>>(
         &self, request: R,
-    ) -> RequestHandler<RequestSet<R, P>, OwnerSet, ProviderSet<P>> {
+    ) -> RequestHandler<RequestSet<R, P>, OwnerSet<'_>, ProviderSet<'_, P>> {
         RequestHandler::from_client(self, request)
     }
 }

@@ -2,10 +2,9 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
 use syn::{Ident, LitStr, Path, Result, Token};
 
-use crate::guest::{Config, method_name};
+use crate::guest::{Config, handler_name};
 
 pub struct Messaging {
     pub topics: Vec<Topic>,
@@ -31,56 +30,14 @@ impl Parse for Topic {
         let pattern: LitStr = input.parse()?;
         input.parse::<Token![:]>()?;
 
-        let mut message: Option<Path> = None;
-
-        let settings;
-        syn::braced!(settings in input);
-        let fields = Punctuated::<Opt, Token![,]>::parse_terminated(&settings)?;
-
-        for field in fields.into_pairs() {
-            match field.into_value() {
-                Opt::Message(m) => {
-                    if message.is_some() {
-                        return Err(syn::Error::new(m.span(), "cannot specify second message"));
-                    }
-                    message = Some(m);
-                }
-            }
-        }
-
-        let Some(message) = message else {
-            return Err(syn::Error::new(pattern.span(), "topic missing `message`"));
-        };
-
-        //
-        let handler = method_name(&message);
+        let message: Path = input.parse()?;
+        let handler = handler_name(&pattern);
 
         Ok(Self {
             pattern,
             message,
             handler,
         })
-    }
-}
-
-mod kw {
-    syn::custom_keyword!(message);
-}
-
-enum Opt {
-    Message(Path),
-}
-
-impl Parse for Opt {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let l = input.lookahead1();
-        if l.peek(kw::message) {
-            input.parse::<kw::message>()?;
-            input.parse::<Token![:]>()?;
-            Ok(Self::Message(input.parse::<Path>()?))
-        } else {
-            Err(l.error())
-        }
     }
 }
 
@@ -99,29 +56,24 @@ pub fn expand(messaging: &Messaging, config: &Config) -> TokenStream {
             pub struct Messaging;
             wasi_messaging::export!(Messaging with_types_in wasi_messaging);
 
+            // Message handler
             impl wasi_messaging::incoming_handler::Guest for Messaging {
                 #[wasi_otel::instrument]
                 async fn handle(message: Message) -> Result<(), Error> {
-                    let topic = message.topic().unwrap_or_default();
+                    let topic = message
+                        .topic()
+                        .ok_or_else(|| Error::Other("message is missing topic".to_string()))?;
 
-                    // check we're processing topics for the correct environment
-                    // let env = &Provider::new().config.environment;
-                    let env = std::env::var("ENV").unwrap_or_default();
-                    let Some(topic) = topic.strip_prefix(&format!("{env}-")) else {
-                        return Err(wasi_messaging::types::Error::Other("Incorrect environment".to_string()));
+                    let result = match topic.as_str() {
+                        #(#topic_arms)*
+                        _ => return Err(Error::Other(format!("unhandled topic: {topic}"))),
                     };
 
-                    if let Err(e) = match &topic {
-                        #(#topic_arms)*
-                        _ => return Err(Error::Other("Unhandled topic".to_string())),
-                    } {
-                        return Err(Error::Other(e.to_string()));
-                    }
-
-                    Ok(())
+                    result.map_err(|e| Error::Other(e.to_string()))
                 }
             }
 
+            // Message processors
             #(#processors)*
         }
     }
@@ -146,7 +98,7 @@ fn expand_handler(topic: &Topic, config: &Config) -> TokenStream {
         #[wasi_otel::instrument]
         async fn #handler_fn(payload: Vec<u8>) -> Result<()> {
              #message::handler(payload)?
-                 .provider(#provider::new())
+                 .provider(&#provider::new())
                  .owner(#owner)
                  .await
                  .map(|_| ())

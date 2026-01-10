@@ -3,6 +3,7 @@ use std::error::Error;
 
 use anyhow::{Context, Result};
 use bytes::Bytes;
+use http_body::Body;
 use http_body_util::BodyExt;
 use wasip3::http::handler;
 use wasip3::http_compat::{http_from_wasi_response, http_into_wasi_request};
@@ -17,7 +18,7 @@ pub use crate::guest::cache::{Cache, CacheOptions};
 /// Returns an error if the request could not be sent.
 pub async fn handle<T>(request: http::Request<T>) -> Result<http::Response<Bytes>>
 where
-    T: http_body::Body + Any,
+    T: Body + Any,
     T::Data: Into<Vec<u8>>,
     T::Error: Into<Box<dyn Error + Send + Sync + 'static>>,
 {
@@ -59,32 +60,3 @@ where
 
     Ok(response)
 }
-
-// use serde::de::DeserializeOwned;
-// use std::fmt::Debug;
-
-// pub trait IntoJson: Debug {
-//     /// Decode the response body into JSON.
-//     ///
-//     /// # Errors
-//     ///
-//     /// Returns an error if the response body is not valid JSON.
-//     async fn json<T: DeserializeOwned>(self) -> Result<T>;
-// }
-
-// impl<T> IntoJson for T
-// where
-//     T: http_body::Body + Debug,
-//     T::Data: Into<Vec<u8>>,
-//     T::Error: Into<Box<dyn Error + Send + Sync + 'static>>,
-// {
-//     async fn json<U: DeserializeOwned>(self) -> Result<U> {
-//         let body = self
-//             .collect()
-//             .await
-//             .map_err(|e| anyhow!("failed to collect body: {}", e.into()))?
-//             .to_bytes();
-//         let data = serde_json::from_slice::<U>(&body)?;
-//         Ok(data)
-//     }
-// }
