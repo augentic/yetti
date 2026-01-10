@@ -1,4 +1,4 @@
-## 0.22.0
+## 0.23.0
 
 Unreleased
 
@@ -12,6 +12,7 @@ Release notes for previous releases can be found on the respective release
 branches of the repository.
 
 <!-- ARCHIVE_START -->
+* [0.22.x](https://github.com/augentic/warp/blob/release-0.22.0/RELEASES.md)
 * [0.21.x](https://github.com/augentic/warp/blob/release-0.21.0/RELEASES.md)
 * [0.20.x](https://github.com/augentic/warp/blob/release-0.20.0/RELEASES.md)
 * [0.20.x](https://github.com/augentic/warp/blob/release-0.20.0/RELEASES.md)
