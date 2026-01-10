@@ -126,7 +126,7 @@ pub fn expand(config: &Config) -> TokenStream {
     }
 }
 
-// Derive a handler method name http path or messaging topic
+// Derive a handler method name from an HTTP path or messaging topic.
 pub fn handler_name(path: &LitStr) -> Ident {
     let path_str = path.value();
     let name = path_str
@@ -198,7 +198,7 @@ mod tests {
 
         let parsed: Config = syn::parse2(input).expect("should parse");
         let http = parsed.http.expect("should have http");
-        
+
         assert_eq!(http.routes.len(), 1);
         assert_eq!(http.routes[0].params.len(), 2);
         assert_eq!(http.routes[0].params[0].to_string(), "vehicle_id");

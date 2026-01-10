@@ -10,14 +10,14 @@ use syn::parse_macro_input;
 /// # Example
 ///
 /// ```ignore
-/// buildgen::guest!({
+/// guest_macro::guest!({
 ///     owner: "at",
 ///     provider: MyProvider,
 ///     http: [
 ///         "/some/get/path": get(SomeRequest, SomeResponse),
 ///         "/some/other-get/path": get(SomeRequest with_query, SomeResponse),
-///         "/some/post/path": post(SomeRequest, SomeResponse)
-///         "/some/post-body/path": put(SomeRequest with_body, SomeResponse)
+///         "/some/post/path": post(SomeRequest, SomeResponse),
+///         "/some/post-body/path": post(SomeRequest with_body, SomeResponse),
 ///     ],
 ///     messaging: [
 ///         "topic-name.v1": TopicMessage,

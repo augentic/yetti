@@ -60,13 +60,16 @@ pub fn expand(messaging: &Messaging, config: &Config) -> TokenStream {
             impl wasi_messaging::incoming_handler::Guest for Messaging {
                 #[wasi_otel::instrument]
                 async fn handle(message: Message) -> Result<(), Error> {
-                    if let Err(e) = match &message.topic().unwrap_or_default() {
+                    let topic = message
+                        .topic()
+                        .ok_or_else(|| Error::Other("message is missing topic".to_string()))?;
+
+                    let result = match topic.as_str() {
                         #(#topic_arms)*
-                        _ => return Err(Error::Other("Unhandled topic".to_string())),
-                    } {
-                        return Err(Error::Other(e.to_string()));
-                    }
-                    Ok(())
+                        _ => return Err(Error::Other(format!("unhandled topic: {topic}"))),
+                    };
+
+                    result.map_err(|e| Error::Other(e.to_string()))
                 }
             }
 

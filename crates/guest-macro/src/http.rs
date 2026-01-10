@@ -47,7 +47,10 @@ impl Parse for Route {
 
         // validate required fields
         let Some(handler) = handler else {
-            return Err(Error::new(path.span(), "route is missing `method`"));
+            return Err(Error::new(
+                path.span(),
+                "route is missing handler (e.g., `get(Request, Response)` or `post(Request, Response)`)",
+            ));
         };
 
         // derived values
@@ -200,72 +203,84 @@ fn expand_route(route: &Route) -> TokenStream {
 fn expand_handler(route: &Route, config: &Config) -> TokenStream {
     let handler = &route.handler;
     let params = &route.params;
+    let function = &route.function;
+    let request = &handler.request;
+    let reply = &handler.reply;
     let owner = &config.owner;
     let provider = &config.provider;
 
-    let method = &handler.method;
-    let request = &handler.request;
-    let reply = &handler.reply;
-    let function = &route.function;
+    let is_get = handler.method == "get";
 
-    let handler_fn = if method == "get" {
-        let args = if params.is_empty() {
-            if handler.with_query {
-                quote! { axum::extract::RawQuery(query): axum::extract::RawQuery }
-            } else {
-                quote! {}
-            }
-        } else if params.len() == 1 {
-            quote! { axum::extract::Path(#(#params),*): axum::extract::Path<String> }
-        } else {
-            let mut param_types = Vec::new();
-            for _ in 0..params.len() {
-                param_types.push(format_ident!("String"));
-            }
-            quote! { axum::extract::Path((#(#params),*)): axum::extract::Path<(#(#param_types),*)> }
-        };
-
-        quote! { #function(#args) }
+    let args = if is_get {
+        expand_get_args(params, handler.with_query)
     } else {
-        let args = if handler.with_body {
-            quote! { body: bytes::Bytes }
-        } else {
-            quote! {}
-        };
-
-        quote! { #function(#args) }
+        expand_post_args(handler.with_body)
     };
 
-    // generate request parameter and type
-    let input = if method == "get" {
-        if params.is_empty() {
-            if handler.with_query {
-                quote! { query }
-            } else {
-                quote! { () }
-            }
-        } else if params.len() == 1 {
-            quote! { #(#params),* }
-        } else {
-            quote! { (#(#params),*) }
-        }
+    let input = if is_get {
+        expand_get_input(params, handler.with_query)
     } else {
-        if handler.with_body {
-            quote! { body.to_vec() }
-        } else {
-            quote! { () }
-        }
+        expand_post_input(handler.with_body)
     };
 
     quote! {
         #[wasi_otel::instrument]
-        async fn #handler_fn -> HttpResult<Reply<#reply>> {
+        async fn #function(#args) -> HttpResult<Reply<#reply>> {
             #request::handler(#input)?
                 .provider(&#provider::new())
                 .owner(#owner)
                 .await
                 .map_err(Into::into)
         }
+    }
+}
+
+/// Builds the function arguments for a GET handler based on path parameters and query settings.
+fn expand_get_args(params: &[Ident], with_query: bool) -> TokenStream {
+    if params.is_empty() {
+        if with_query {
+            quote! { axum::extract::RawQuery(query): axum::extract::RawQuery }
+        } else {
+            quote! {}
+        }
+    } else if params.len() == 1 {
+        quote! { axum::extract::Path(#(#params),*): axum::extract::Path<String> }
+    } else {
+        let param_types = vec![format_ident!("String"); params.len()];
+        quote! { axum::extract::Path((#(#params),*)): axum::extract::Path<(#(#param_types),*)> }
+    }
+}
+
+/// Builds the function arguments for a POST handler based on body settings.
+fn expand_post_args(with_body: bool) -> TokenStream {
+    if with_body {
+        quote! { body: bytes::Bytes }
+    } else {
+        quote! {}
+    }
+}
+
+/// Builds the input expression passed to the request handler for GET requests.
+fn expand_get_input(params: &[Ident], with_query: bool) -> TokenStream {
+    if params.is_empty() {
+        if with_query {
+            quote! { query }
+        } else {
+            quote! { () }
+        }
+    } else if params.len() == 1 {
+        quote! { #(#params),* }
+    } else {
+        quote! { (#(#params),*) }
+    }
+}
+
+/// Builds the input expression passed to the request handler for POST requests.
+fn expand_post_input(with_body: bool) -> TokenStream {
+    if with_body {
+        quote! { body.to_vec() }
+    } else {
+        quote! { () }
     }
 }
 
