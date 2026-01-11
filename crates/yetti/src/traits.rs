@@ -40,7 +40,7 @@ pub trait Host<T>: Debug + Sync + Send {
 ///
 /// Each WASI host crate provides a blanket impl that automatically implements
 /// their `WasiXxxView` trait for any type that implements `ViewProvider<WasiXxx>`.
-pub trait View<H: HasData, T> {
+pub trait View<H: HasData, T>:Send {
     /// Return a [`WasiBlobstoreCtxView`] from mutable reference to self.
     fn data(&mut self) -> <H as HasData>::Data<'_>;
 }

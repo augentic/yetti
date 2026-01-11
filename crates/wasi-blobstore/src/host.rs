@@ -58,7 +58,7 @@ impl HasData for WasiBlobstore {
 
 impl<T> Host<T> for WasiBlobstore
 where
-    T: View<Self, T> + Send + 'static,
+    T: View<Self, T>  + 'static,
 {
     fn add_to_linker(linker: &mut Linker<T>) -> Result<()> {
         blobstore::add_to_linker::<_, Self>(linker, T::data)?;
@@ -71,7 +71,7 @@ impl<'a, T> CtxView<'a, T> for WasiBlobstore
 where
     T: WasiBlobstoreCtx,
 {
-    fn ctx_view(ctx: &'a mut T, table: &'a mut ResourceTable) -> <Self as HasData>::Data<'a> {
+    fn ctx_view(ctx: &'a mut T, table: &'a mut ResourceTable) -> WasiBlobstoreCtxView<'a> {
         WasiBlobstoreCtxView { ctx, table }
     }
 }
