@@ -31,7 +31,7 @@ pub fn expand(config: &Config) -> syn::Result<TokenStream> {
             use yetti::tokio;
             use yetti::wasmtime::component::{HasData,InstancePre};
             use yetti::wasmtime_wasi::{ResourceTable, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
-            use yetti::{Backend, Compiled, CtxView, Server, State, View};
+            use yetti::{Backend, Compiled, Server, State};
 
             use super::*;
 
