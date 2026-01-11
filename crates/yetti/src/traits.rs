@@ -9,7 +9,7 @@ use std::fmt::Debug;
 
 use anyhow::Result;
 use futures::future::BoxFuture;
-use wasmtime::component::{InstancePre, Linker};
+use wasmtime::component::{HasData, InstancePre, Linker, ResourceTable};
 
 pub type FutureResult<T> = BoxFuture<'static, Result<T>>;
 
@@ -33,12 +33,21 @@ pub trait Host<T>: Debug + Sync + Send {
     fn add_to_linker(linker: &mut Linker<T>) -> Result<()>;
 }
 
-// use wasmtime::component::HasData;
-// pub trait View<'a, T>: HasData + 'a + Send {
-//     fn ctx_view(ctx: &'a mut T, table: &'a mut ResourceTable) -> <Self as HasData>::Data<'a> {
-//         todo!()
-//     }
-// }
+/// Implemented by `StoreCtx` to provide access to a specific host's context.
+///
+/// This trait enables the runtime macro to generate view provider implementations
+/// without needing to know the module path of each WASI host.
+///
+/// Each WASI host crate provides a blanket impl that automatically implements
+/// their `WasiXxxView` trait for any type that implements `ViewProvider<WasiXxx>`.
+pub trait View<H: HasData, T> {
+    /// Return a [`WasiBlobstoreCtxView`] from mutable reference to self.
+    fn data(&mut self) -> <H as HasData>::Data<'_>;
+}
+
+pub trait CtxView<'a, T>: HasData + 'a + Send {
+    fn ctx_view(ctx: &'a mut T, table: &'a mut ResourceTable) -> <Self as HasData>::Data<'a>;
+}
 
 /// Implemented by WASI hosts that are servers in order to allow the runtime to
 /// start them.

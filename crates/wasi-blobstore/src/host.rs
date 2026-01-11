@@ -39,7 +39,7 @@ pub use resource::*;
 use wasmtime::component::{HasData, Linker, ResourceTable};
 use wasmtime_wasi::p2::pipe::MemoryOutputPipe;
 pub use yetti::FutureResult;
-use yetti::{Host, Server, State};
+use yetti::{CtxView, Host, Server, State, View};
 
 pub use self::default_impl::BlobstoreDefault;
 pub use self::generated::wasi::blobstore::container::{ContainerMetadata, ObjectMetadata};
@@ -58,25 +58,34 @@ impl HasData for WasiBlobstore {
 
 impl<T> Host<T> for WasiBlobstore
 where
-    T: WasiBlobstoreView + 'static,
+    T: View<Self, T> + Send + 'static,
 {
     fn add_to_linker(linker: &mut Linker<T>) -> Result<()> {
-        blobstore::add_to_linker::<_, Self>(linker, T::blobstore)?;
-        container::add_to_linker::<_, Self>(linker, T::blobstore)?;
-        types::add_to_linker::<_, Self>(linker, T::blobstore)
+        blobstore::add_to_linker::<_, Self>(linker, T::data)?;
+        container::add_to_linker::<_, Self>(linker, T::data)?;
+        types::add_to_linker::<_, Self>(linker, T::data)
+    }
+}
+
+impl<'a, T> CtxView<'a, T> for WasiBlobstore
+where
+    T: WasiBlobstoreCtx,
+{
+    fn ctx_view(ctx: &'a mut T, table: &'a mut ResourceTable) -> <Self as HasData>::Data<'a> {
+        WasiBlobstoreCtxView { ctx, table }
     }
 }
 
 impl<S> Server<S> for WasiBlobstore where S: State {}
 
-/// A trait which provides internal WASI Blobstore state.
-///
-/// This is implemented by the `T` in `Linker<T>` — a single type shared across
-/// all WASI components for the runtime build.
-pub trait WasiBlobstoreView: Send {
-    /// Return a [`WasiBlobstoreCtxView`] from mutable reference to self.
-    fn blobstore(&mut self) -> WasiBlobstoreCtxView<'_>;
-}
+// /// A trait which provides internal WASI Blobstore state.
+// ///
+// /// This is implemented by the `T` in `Linker<T>` — a single type shared across
+// /// all WASI components for the runtime build.
+// pub trait WasiBlobstoreView: Send {
+//     /// Return a [`WasiBlobstoreCtxView`] from mutable reference to self.
+//     fn blobstore(&mut self) -> WasiBlobstoreCtxView<'_>;
+// }
 
 /// View into [`WasiBlobstoreCtx`] implementation and [`ResourceTable`].
 pub struct WasiBlobstoreCtxView<'a> {
@@ -105,15 +114,29 @@ pub trait WasiBlobstoreCtx: Debug + Send + Sync + 'static {
     fn container_exists(&self, name: String) -> FutureResult<bool>;
 }
 
+// #[macro_export]
+// macro_rules! wasi_view {
+//     ($store_ctx:ty, $field_name:ident) => {
+//         impl yetti_wasi_blobstore::WasiBlobstoreView for $store_ctx {
+//             fn blobstore(&mut self) -> yetti_wasi_blobstore::WasiBlobstoreCtxView<'_> {
+//                 yetti_wasi_blobstore::WasiBlobstoreCtxView {
+//                     ctx: &mut self.$field_name,
+//                     table: &mut self.table,
+//                 }
+//             }
+//         }
+//     };
+// }
+
 #[macro_export]
 macro_rules! wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_blobstore::WasiBlobstoreView for $store_ctx {
-            fn blobstore(&mut self) -> yetti_wasi_blobstore::WasiBlobstoreCtxView<'_> {
-                yetti_wasi_blobstore::WasiBlobstoreCtxView {
-                    ctx: &mut self.$field_name,
-                    table: &mut self.table,
-                }
+        use yetti::wasmtime::component::HasData;
+        use yetti::{CtxView, View};
+
+        impl View<WasiBlobstore, $store_ctx> for $store_ctx {
+            fn data(&mut self) -> <WasiBlobstore as HasData>::Data<'_> {
+                WasiBlobstore::ctx_view(&mut self.$field_name, &mut self.table)
             }
         }
     };
