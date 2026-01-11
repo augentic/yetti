@@ -1,6 +1,5 @@
-
-use wasi_http::{WasiHttp, HttpDefault};
-use wasi_blobstore::{WasiBlobstore, BlobstoreDefault};
+use wasi_blobstore::{BlobstoreDefault, WasiBlobstore};
+use wasi_http::{HttpDefault, WasiHttp};
 
 warp::runtime!({
     main: true,
@@ -10,3 +9,10 @@ warp::runtime!({
     }
 });
 
+#[derive(WasiHttpView)]
+#[wasi_http(field = "http")]
+pub struct StoreCtx {
+    pub table: ResourceTable,
+    pub wasi: WasiCtx,
+    // #(pub #store_ctx_fields,)*
+}
