@@ -29,9 +29,9 @@ pub fn expand(config: &Config) -> syn::Result<TokenStream> {
             use yetti::anyhow::Context as _;
             use yetti::futures::future::{try_join_all, BoxFuture};
             use yetti::tokio;
-            use yetti::wasmtime::component::InstancePre;
+            use yetti::wasmtime::component::{HasData,InstancePre};
             use yetti::wasmtime_wasi::{ResourceTable, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
-            use yetti::{Backend, Compiled, Server, State};
+            use yetti::{Backend, Compiled, CtxView, Server, State, View};
 
             use super::*;
 

@@ -131,9 +131,6 @@ pub trait WasiBlobstoreCtx: Debug + Send + Sync + 'static {
 #[macro_export]
 macro_rules! wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        use yetti::wasmtime::component::HasData;
-        use yetti::{CtxView, View};
-
         impl View<WasiBlobstore, $store_ctx> for $store_ctx {
             fn data(&mut self) -> <WasiBlobstore as HasData>::Data<'_> {
                 WasiBlobstore::ctx_view(&mut self.$field_name, &mut self.table)
