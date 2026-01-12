@@ -25,11 +25,11 @@
 use anyhow::anyhow;
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use qwasr_sdk::HttpResult;
+use qwasr_wasi_websockets::store;
 use serde_json::{Value, json};
 use wasip3::exports::http::handler::Guest;
 use wasip3::http::types::{ErrorCode, Request, Response};
-use yetti_sdk::HttpResult;
-use yetti_wasi_websockets::store;
 
 struct HttpGuest;
 wasip3::http::proxy::export!(HttpGuest);
@@ -39,7 +39,7 @@ impl Guest for HttpGuest {
     async fn handle(request: Request) -> Result<Response, ErrorCode> {
         let router =
             Router::new().route("/health", get(get_handler)).route("/socket", post(post_handler));
-        yetti_wasi_http::serve(router, request).await
+        qwasr_wasi_http::serve(router, request).await
     }
 }
 

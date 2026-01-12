@@ -1,5 +1,5 @@
 [package]
-name = "yetti-wasi-identity"
+name = "qwasr-wasi-identity"
 description = "WASI Identity implementation"
 readme = "README.md"
 authors.workspace = true
@@ -21,7 +21,7 @@ anyhow.workspace = true
 fromenv.workspace = true
 futures.workspace = true
 oauth2 = "5.0.0"
-yetti.workspace = true
+qwasr.workspace = true
 serde.workspace = true
 tracing.workspace = true
 wasmtime.workspace = true

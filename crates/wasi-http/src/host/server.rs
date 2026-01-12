@@ -23,7 +23,7 @@ use wasmtime_wasi_http::io::TokioIo;
 use wasmtime_wasi_http::p3::WasiHttpView;
 use wasmtime_wasi_http::p3::bindings::ProxyIndices;
 use wasmtime_wasi_http::p3::bindings::http::types::{self as wasi, ErrorCode};
-use yetti::State;
+use qwasr::State;
 
 type OutgoingBody = UnsyncBoxBody<Bytes, anyhow::Error>;
 

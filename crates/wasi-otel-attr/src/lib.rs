@@ -24,7 +24,7 @@ pub fn instrument(args: TokenStream, item: TokenStream) -> TokenStream {
     // recreate function with the instrument macro wrapping the body
     let new_fn = quote! {
         #signature {
-            let _guard = ::yetti_wasi_otel::init();
+            let _guard = ::qwasr_wasi_otel::init();
             #body
         }
     };

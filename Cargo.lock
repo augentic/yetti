@@ -834,19 +834,19 @@ dependencies = [
  "tracing",
  "wasip3",
  "wit-bindgen 0.50.0",
- "yetti",
- "yetti-sdk",
- "yetti-wasi-blobstore",
- "yetti-wasi-config",
- "yetti-wasi-http",
- "yetti-wasi-identity",
- "yetti-wasi-keyvalue",
- "yetti-wasi-messaging",
- "yetti-wasi-otel",
- "yetti-wasi-otel-attr",
- "yetti-wasi-sql",
- "yetti-wasi-vault",
- "yetti-wasi-websockets",
+ "qwasr",
+ "qwasr-sdk",
+ "qwasr-wasi-blobstore",
+ "qwasr-wasi-config",
+ "qwasr-wasi-http",
+ "qwasr-wasi-identity",
+ "qwasr-wasi-keyvalue",
+ "qwasr-wasi-messaging",
+ "qwasr-wasi-otel",
+ "qwasr-wasi-otel-attr",
+ "qwasr-wasi-sql",
+ "qwasr-wasi-vault",
+ "qwasr-wasi-websockets",
 ]
 
 [[package]]
@@ -4431,7 +4431,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9edde0db4769d2dc68579893f2306b26c6ecfbe0ef499b013d731b7b9247e0b9"
 
 [[package]]
-name = "yetti"
+name = "qwasr"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4442,12 +4442,12 @@ dependencies = [
  "tracing",
  "wasmtime",
  "wasmtime-wasi",
- "yetti-otel",
- "yetti-runtime-macro",
+ "qwasr-otel",
+ "qwasr-runtime-macro",
 ]
 
 [[package]]
-name = "yetti-guest-macro"
+name = "qwasr-guest-macro"
 version = "0.24.0"
 dependencies = [
  "proc-macro2",
@@ -4456,7 +4456,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "yetti-otel"
+name = "qwasr-otel"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4472,7 +4472,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "yetti-runtime-macro"
+name = "qwasr-runtime-macro"
 version = "0.24.0"
 dependencies = [
  "proc-macro2",
@@ -4481,7 +4481,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "yetti-sdk"
+name = "qwasr-sdk"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4496,17 +4496,17 @@ dependencies = [
  "tracing-subscriber",
  "wasip3",
  "wit-bindgen 0.50.0",
- "yetti-guest-macro",
- "yetti-wasi-config",
- "yetti-wasi-http",
- "yetti-wasi-identity",
- "yetti-wasi-keyvalue",
- "yetti-wasi-messaging",
- "yetti-wasi-otel",
+ "qwasr-guest-macro",
+ "qwasr-wasi-config",
+ "qwasr-wasi-http",
+ "qwasr-wasi-identity",
+ "qwasr-wasi-keyvalue",
+ "qwasr-wasi-messaging",
+ "qwasr-wasi-otel",
 ]
 
 [[package]]
-name = "yetti-wasi-blobstore"
+name = "qwasr-wasi-blobstore"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4518,11 +4518,11 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.50.0",
- "yetti",
+ "qwasr",
 ]
 
 [[package]]
-name = "yetti-wasi-config"
+name = "qwasr-wasi-config"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4530,11 +4530,11 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi-config",
  "wit-bindgen 0.50.0",
- "yetti",
+ "qwasr",
 ]
 
 [[package]]
-name = "yetti-wasi-http"
+name = "qwasr-wasi-http"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4559,12 +4559,12 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wasmtime-wasi-http",
- "yetti",
- "yetti-wasi-keyvalue",
+ "qwasr",
+ "qwasr-wasi-keyvalue",
 ]
 
 [[package]]
-name = "yetti-wasi-identity"
+name = "qwasr-wasi-identity"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4577,11 +4577,11 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.50.0",
- "yetti",
+ "qwasr",
 ]
 
 [[package]]
-name = "yetti-wasi-keyvalue"
+name = "qwasr-wasi-keyvalue"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4595,11 +4595,11 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.50.0",
- "yetti",
+ "qwasr",
 ]
 
 [[package]]
-name = "yetti-wasi-messaging"
+name = "qwasr-wasi-messaging"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4613,11 +4613,11 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.50.0",
- "yetti",
+ "qwasr",
 ]
 
 [[package]]
-name = "yetti-wasi-otel"
+name = "qwasr-wasi-otel"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4634,13 +4634,13 @@ dependencies = [
  "tracing-subscriber",
  "wasmtime",
  "wit-bindgen 0.50.0",
- "yetti",
- "yetti-otel",
- "yetti-wasi-otel-attr",
+ "qwasr",
+ "qwasr-otel",
+ "qwasr-wasi-otel-attr",
 ]
 
 [[package]]
-name = "yetti-wasi-otel-attr"
+name = "qwasr-wasi-otel-attr"
 version = "0.24.0"
 dependencies = [
  "proc-macro2",
@@ -4649,7 +4649,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "yetti-wasi-sql"
+name = "qwasr-wasi-sql"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4664,11 +4664,11 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.50.0",
- "yetti",
+ "qwasr",
 ]
 
 [[package]]
-name = "yetti-wasi-vault"
+name = "qwasr-wasi-vault"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4679,11 +4679,11 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.50.0",
- "yetti",
+ "qwasr",
 ]
 
 [[package]]
-name = "yetti-wasi-websockets"
+name = "qwasr-wasi-websockets"
 version = "0.24.0"
 dependencies = [
  "anyhow",
@@ -4702,7 +4702,7 @@ dependencies = [
  "wasmtime",
  "wasmtime-wasi",
  "wit-bindgen 0.50.0",
- "yetti",
+ "qwasr",
 ]
 
 [[package]]

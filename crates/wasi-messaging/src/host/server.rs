@@ -4,7 +4,7 @@ use anyhow::{Context, Result, anyhow};
 use futures::StreamExt;
 use tracing::{Instrument, debug_span, instrument};
 use wasmtime::Store;
-use yetti::State;
+use qwasr::State;
 
 use crate::host::WasiMessagingView;
 use crate::host::generated::Messaging;

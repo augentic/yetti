@@ -11,14 +11,14 @@ use futures::FutureExt;
 use opentelemetry_proto::tonic::collector::metrics::v1::ExportMetricsServiceRequest;
 use opentelemetry_proto::tonic::collector::trace::v1::ExportTraceServiceRequest;
 use tracing::instrument;
-use yetti::{Backend, FutureResult};
+use qwasr::{Backend, FutureResult};
 
 use crate::host::WasiOtelCtx;
 
 #[derive(Debug, Clone, Default)]
 pub struct ConnectOptions;
 
-impl yetti::FromEnv for ConnectOptions {
+impl qwasr::FromEnv for ConnectOptions {
     fn from_env() -> Result<Self> {
         Ok(Self)
     }

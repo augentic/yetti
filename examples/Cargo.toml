@@ -8,19 +8,19 @@ version.workspace = true
 [dependencies]
 anyhow.workspace = true
 cfg-if.workspace = true
-yetti-wasi-blobstore.workspace = true
-yetti-wasi-config.workspace = true
-yetti-wasi-http.workspace = true
-yetti-wasi-identity.workspace = true
-yetti-wasi-keyvalue.workspace = true
-yetti-wasi-messaging.workspace = true
-yetti-wasi-otel.workspace = true
-yetti-wasi-sql.workspace = true
-yetti-wasi-vault.workspace = true
-yetti-wasi-websockets.workspace = true
+qwasr-wasi-blobstore.workspace = true
+qwasr-wasi-config.workspace = true
+qwasr-wasi-http.workspace = true
+qwasr-wasi-identity.workspace = true
+qwasr-wasi-keyvalue.workspace = true
+qwasr-wasi-messaging.workspace = true
+qwasr-wasi-otel.workspace = true
+qwasr-wasi-sql.workspace = true
+qwasr-wasi-vault.workspace = true
+qwasr-wasi-websockets.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-yetti.workspace = true
+qwasr.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 axum = { workspace = true, features = ["macros"] }
@@ -34,8 +34,8 @@ tower-http = { version = "0.6.8", features = ["cors", "trace"] }
 tracing.workspace = true
 wasip3.workspace = true
 wit-bindgen.workspace = true
-yetti-sdk.workspace = true
-yetti-wasi-otel-attr.workspace = true
+qwasr-sdk.workspace = true
+qwasr-wasi-otel-attr.workspace = true
 
 [[example]]
 name = "blobstore-wasm"

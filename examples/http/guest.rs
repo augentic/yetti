@@ -10,26 +10,26 @@
 
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use qwasr_sdk::HttpResult;
 use serde_json::{Value, json};
 use tracing::Level;
 use wasip3::exports::http::handler::Guest;
 use wasip3::http::types::{ErrorCode, Request, Response};
-use yetti_sdk::HttpResult;
 
 struct HttpGuest;
 wasip3::http::proxy::export!(HttpGuest);
 
 impl Guest for HttpGuest {
     /// Routes incoming HTTP requests to handlers.
-    #[yetti_wasi_otel::instrument(name = "http_guest_handle", level = Level::DEBUG)]
+    #[qwasr_wasi_otel::instrument(name = "http_guest_handle", level = Level::DEBUG)]
     async fn handle(request: Request) -> Result<Response, ErrorCode> {
         let router = Router::new().route("/", get(echo_get)).route("/", post(echo_post));
-        yetti_wasi_http::serve(router, request).await
+        qwasr_wasi_http::serve(router, request).await
     }
 }
 
 /// GET request handler.
-#[yetti_wasi_otel::instrument]
+#[qwasr_wasi_otel::instrument]
 async fn echo_get(Json(body): Json<Value>) -> HttpResult<Json<Value>> {
     Ok(Json(json!({
         "message": "Hello from echo_get!",
@@ -38,7 +38,7 @@ async fn echo_get(Json(body): Json<Value>) -> HttpResult<Json<Value>> {
 }
 
 /// POST request handler.
-#[yetti_wasi_otel::instrument]
+#[qwasr_wasi_otel::instrument]
 async fn echo_post(Json(body): Json<Value>) -> HttpResult<Json<Value>> {
     Ok(Json(json!({
         "message": "Hello from echo_post!",

@@ -7,12 +7,12 @@ mod capabilities;
 mod error;
 
 #[cfg(target_arch = "wasm32")]
-pub use yetti_guest_macro::*;
+pub use qwasr_guest_macro::*;
 pub use {anyhow, axum, bytes, http, http_body, tracing};
 #[cfg(target_arch = "wasm32")]
 pub use {
-    wasip3, wit_bindgen, yetti_wasi_http, yetti_wasi_identity, yetti_wasi_keyvalue,
-    yetti_wasi_messaging, yetti_wasi_otel,
+    wasip3, wit_bindgen, qwasr_wasi_http, qwasr_wasi_identity, qwasr_wasi_keyvalue,
+    qwasr_wasi_messaging, qwasr_wasi_otel,
 };
 
 pub use crate::api::*;
@@ -24,7 +24,7 @@ pub use crate::error::*;
 ///
 /// # Example
 /// ```rust,ignore
-/// yetti_sdk::ensure_env!("API_KEY", "SOME_URL");
+/// qwasr_sdk::ensure_env!("API_KEY", "SOME_URL");
 /// ```
 #[macro_export]
 macro_rules! ensure_env {

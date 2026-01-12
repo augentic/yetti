@@ -27,27 +27,27 @@ use anyhow::Context;
 use axum::routing::post;
 use axum::{Json, Router};
 use bytes::Bytes;
+use qwasr_sdk::HttpResult;
+use qwasr_wasi_vault::vault;
 use serde_json::Value;
 use tracing::Level;
 use wasip3::exports::http::handler::Guest;
 use wasip3::http::types::{ErrorCode, Request, Response};
-use yetti_sdk::HttpResult;
-use yetti_wasi_vault::vault;
 
 struct Http;
 wasip3::http::proxy::export!(Http);
 
 impl Guest for Http {
     /// Routes incoming requests to the vault handler.
-    #[yetti_wasi_otel::instrument(name = "http_guest_handle", level = Level::DEBUG)]
+    #[qwasr_wasi_otel::instrument(name = "http_guest_handle", level = Level::DEBUG)]
     async fn handle(request: Request) -> Result<Response, ErrorCode> {
         let router = Router::new().route("/", post(handler));
-        yetti_wasi_http::serve(router, request).await
+        qwasr_wasi_http::serve(router, request).await
     }
 }
 
 /// Stores and retrieves a secret from the vault.
-#[yetti_wasi_otel::instrument]
+#[qwasr_wasi_otel::instrument]
 async fn handler(body: Bytes) -> HttpResult<Json<Value>> {
     let locker =
         vault::open("credibil-locker".to_string()).await.context("failed to open vault locker")?;

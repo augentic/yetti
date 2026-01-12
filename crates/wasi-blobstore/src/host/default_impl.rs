@@ -10,7 +10,7 @@ use anyhow::{Result, anyhow};
 use futures::FutureExt;
 use parking_lot::RwLock;
 use tracing::instrument;
-use yetti::Backend;
+use qwasr::Backend;
 
 use crate::host::WasiBlobstoreCtx;
 use crate::host::generated::wasi::blobstore::container::{ContainerMetadata, ObjectMetadata};
@@ -19,7 +19,7 @@ use crate::host::resource::{Container, FutureResult};
 #[derive(Debug, Clone, Default)]
 pub struct ConnectOptions;
 
-impl yetti::FromEnv for ConnectOptions {
+impl qwasr::FromEnv for ConnectOptions {
     fn from_env() -> Result<Self> {
         Ok(Self)
     }

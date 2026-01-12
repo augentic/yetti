@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use futures::Stream;
 use serde::{Deserialize, Serialize};
-pub use yetti::FutureResult;
+pub use qwasr::FutureResult;
 
 use crate::host::generated::wasi::messaging::types;
 pub type Subscriptions = Pin<Box<dyn Stream<Item = MessageProxy> + Send>>;

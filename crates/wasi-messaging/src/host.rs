@@ -39,8 +39,8 @@ use std::sync::Arc;
 
 use wasmtime::component::{HasData, Linker};
 use wasmtime_wasi::{ResourceTable, ResourceTableError};
-pub use yetti::FutureResult;
-use yetti::{Host, Server, State};
+pub use qwasr::FutureResult;
+use qwasr::{Host, Server, State};
 
 pub use self::default_impl::MessagingDefault;
 pub use self::generated::Messaging;
@@ -175,11 +175,11 @@ impl From<anyhow::Error> for Error {
 }
 
 #[macro_export]
-macro_rules! yetti_wasi_view {
+macro_rules! qwasr_wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_messaging::WasiMessagingView for $store_ctx {
-            fn messaging(&mut self) -> yetti_wasi_messaging::WasiMessagingCtxView<'_> {
-                yetti_wasi_messaging::WasiMessagingCtxView {
+        impl qwasr_wasi_messaging::WasiMessagingView for $store_ctx {
+            fn messaging(&mut self) -> qwasr_wasi_messaging::WasiMessagingCtxView<'_> {
+                qwasr_wasi_messaging::WasiMessagingCtxView {
                     ctx: &mut self.$field_name,
                     table: &mut self.table,
                 }

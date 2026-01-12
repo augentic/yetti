@@ -1,5 +1,5 @@
 [package]
-name = "yetti-wasi-messaging"
+name = "qwasr-wasi-messaging"
 description = "WASI messaging WIT implementation"
 readme = "README.md"
 authors.workspace = true
@@ -22,7 +22,7 @@ workspace = true
 anyhow.workspace = true
 futures.workspace = true
 http.workspace = true
-yetti.workspace = true
+qwasr.workspace = true
 serde.workspace = true
 time.workspace = true
 tokio = { workspace = true, features = ["sync"] }

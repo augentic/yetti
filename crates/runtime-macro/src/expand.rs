@@ -26,18 +26,18 @@ pub fn expand(config: &Config) -> syn::Result<TokenStream> {
             use std::path::PathBuf;
 
             use anyhow::Result;
-            use yetti::anyhow::Context as _;
-            use yetti::futures::future::{try_join_all, BoxFuture};
-            use yetti::tokio;
-            use yetti::wasmtime::component::{HasData,InstancePre};
-            use yetti::wasmtime_wasi::{ResourceTable, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
-            use yetti::{Backend, Compiled, Server, State};
+            use qwasr::anyhow::Context as _;
+            use qwasr::futures::future::{try_join_all, BoxFuture};
+            use qwasr::tokio;
+            use qwasr::wasmtime::component::{HasData,InstancePre};
+            use qwasr::wasmtime_wasi::{ResourceTable, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
+            use qwasr::{Backend, Compiled, Server, State};
 
             use super::*;
 
             /// Run the specified wasm guest using the configured runtime.
             pub async fn run(wasm: PathBuf) -> Result<()> {
-                let mut compiled = yetti::create(&wasm)
+                let mut compiled = qwasr::create(&wasm)
                     .with_context(|| format!("compiling {}", wasm.display()))?;
                 let run_state = Context::new(&mut compiled)
                     .await
@@ -163,7 +163,7 @@ impl TryFrom<&Config> for Generated {
 
         for host in &input.hosts {
             let host_type = &host.type_;
-            let host_ident = yetti_wasi_ident(host_type);
+            let host_ident = qwasr_wasi_ident(host_type);
             let backend_type = &host.backend;
             let backend_ident = field_ident(backend_type);
 
@@ -176,22 +176,22 @@ impl TryFrom<&Config> for Generated {
 
             // WASI view impls
             // HACK: derive module name from WASI type
-            let module = yetti_wasi_ident(host_type);
+            let module = qwasr_wasi_ident(host_type);
             wasi_view_impls.push(quote! {
-                #module::yetti_wasi_view!(StoreCtx, #host_ident);
+                #module::qwasr_wasi_view!(StoreCtx, #host_ident);
             });
         }
 
         // main function (optional)
         let main_fn = if input.gen_main {
             quote! {
-                use yetti::tokio;
+                use qwasr::tokio;
 
                 #[tokio::main]
                 async fn main() -> anyhow::Result<()> {
-                    use yetti::Parser;
-                    match yetti::Cli::parse().command {
-                        yetti::Command::Run { wasm } => runtime::run(wasm).await,
+                    use qwasr::Parser;
+                    match qwasr::Cli::parse().command {
+                        qwasr::Command::Run { wasm } => runtime::run(wasm).await,
                         _ => unreachable!(),
                     }
                 }
@@ -235,12 +235,12 @@ fn field_ident(path: &Path) -> Ident {
     format_ident!("{field_str}")
 }
 
-fn yetti_wasi_ident(path: &Path) -> Ident {
+fn qwasr_wasi_ident(path: &Path) -> Ident {
     let Some(ident) = path.segments.last() else {
         return format_ident!("wasi");
     };
 
     let name = quote! {#ident}.to_string();
-    let name = name.replace("Wasi", "yetti_wasi_").to_lowercase();
+    let name = name.replace("Wasi", "qwasr_wasi_").to_lowercase();
     format_ident!("{name}")
 }

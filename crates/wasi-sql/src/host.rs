@@ -36,8 +36,8 @@ use std::sync::Arc;
 
 use wasmtime::component::{HasData, Linker};
 use wasmtime_wasi::ResourceTable;
-pub use yetti::FutureResult;
-use yetti::{Host, Server, State};
+pub use qwasr::FutureResult;
+use qwasr::{Host, Server, State};
 
 use self::generated::wasi::sql::{readwrite, types};
 pub use crate::host::default_impl::SqlDefault;
@@ -90,11 +90,11 @@ pub trait WasiSqlCtx: Debug + Send + Sync + 'static {
 }
 
 #[macro_export]
-macro_rules! yetti_wasi_view {
+macro_rules! qwasr_wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_sql::WasiSqlView for $store_ctx {
-            fn sql(&mut self) -> yetti_wasi_sql::WasiSqlCtxView<'_> {
-                yetti_wasi_sql::WasiSqlCtxView {
+        impl qwasr_wasi_sql::WasiSqlView for $store_ctx {
+            fn sql(&mut self) -> qwasr_wasi_sql::WasiSqlCtxView<'_> {
+                qwasr_wasi_sql::WasiSqlCtxView {
                     ctx: &mut self.$field_name,
                     table: &mut self.table,
                 }

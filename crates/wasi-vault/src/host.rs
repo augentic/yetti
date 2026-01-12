@@ -32,8 +32,8 @@ use std::sync::Arc;
 
 use wasmtime::component::{HasData, Linker};
 use wasmtime_wasi::ResourceTable;
-pub use yetti::FutureResult;
-use yetti::{Host, Server, State};
+pub use qwasr::FutureResult;
+use qwasr::{Host, Server, State};
 
 use self::generated::wasi::vault::vault;
 pub use crate::host::default_impl::VaultDefault;
@@ -84,11 +84,11 @@ pub trait WasiVaultCtx: Debug + Send + Sync + 'static {
 }
 
 #[macro_export]
-macro_rules! yetti_wasi_view {
+macro_rules! qwasr_wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_vault::WasiVaultView for $store_ctx {
-            fn vault(&mut self) -> yetti_wasi_vault::WasiVaultCtxView<'_> {
-                yetti_wasi_vault::WasiVaultCtxView {
+        impl qwasr_wasi_vault::WasiVaultView for $store_ctx {
+            fn vault(&mut self) -> qwasr_wasi_vault::WasiVaultCtxView<'_> {
+                qwasr_wasi_vault::WasiVaultCtxView {
                     ctx: &mut self.$field_name,
                     table: &mut self.table,
                 }

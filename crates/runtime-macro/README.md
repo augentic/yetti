@@ -21,8 +21,8 @@ Then use the `runtime!` macro to generate your runtime infrastructure:
 use buildgen::runtime;
 
 // Import the backend types you want to use
-use yetti_wasi_http::WasiHttpCtx;
-use yetti_wasi_otel::DefaultOtel;
+use qwasr_wasi_http::WasiHttpCtx;
+use qwasr_wasi_otel::DefaultOtel;
 use be_mongodb::Client as MongoDb;
 use be_nats::Client as Nats;
 use be_azure::Client as Azure;
@@ -138,20 +138,20 @@ You can create different runtime configurations for different use cases:
 ```rust
 // Minimal HTTP server
 mod http_runtime {
-    use yetti_wasi_http::WasiHttpCtx;
+    use qwasr_wasi_http::WasiHttpCtx;
 
-    yetti::runtime!({
+    qwasr::runtime!({
         "http": WasiHttpCtx
     });
 }
 
 // Full-featured runtime
 mod full_runtime {
-    use yetti_wasi_http::WasiHttpCtx;
-    use yetti_wasi_otel::DefaultOtel;
+    use qwasr_wasi_http::WasiHttpCtx;
+    use qwasr_wasi_otel::DefaultOtel;
     use be_nats::Client as Nats;
 
-    yetti::runtime!({
+    qwasr::runtime!({
         "http": WasiHttpCtx,
         "otel": DefaultOtel,
         "keyvalue": Nats,
@@ -165,7 +165,7 @@ Now you can declaratively specify your configuration:
 
 ```rust
 mod credibil_runtime {
-    yetti::runtime!({
+    qwasr::runtime!({
         "http": WasiHttpCtx,
         "otel": DefaultOtel,
         "blobstore": MongoDb,

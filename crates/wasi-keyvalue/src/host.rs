@@ -33,8 +33,8 @@ use std::sync::Arc;
 
 use wasmtime::component::{HasData, Linker, ResourceTableError};
 use wasmtime_wasi::ResourceTable;
-pub use yetti::FutureResult;
-use yetti::{Host, Server, State};
+pub use qwasr::FutureResult;
+use qwasr::{Host, Server, State};
 
 pub use self::default_impl::KeyValueDefault;
 use self::generated::wasi::keyvalue::store::Error;
@@ -96,11 +96,11 @@ impl From<ResourceTableError> for Error {
 }
 
 #[macro_export]
-macro_rules! yetti_wasi_view {
+macro_rules! qwasr_wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_keyvalue::WasiKeyValueView for $store_ctx {
-            fn keyvalue(&mut self) -> yetti_wasi_keyvalue::WasiKeyValueCtxView<'_> {
-                yetti_wasi_keyvalue::WasiKeyValueCtxView {
+        impl qwasr_wasi_keyvalue::WasiKeyValueView for $store_ctx {
+            fn keyvalue(&mut self) -> qwasr_wasi_keyvalue::WasiKeyValueCtxView<'_> {
+                qwasr_wasi_keyvalue::WasiKeyValueCtxView {
                     ctx: &mut self.$field_name,
                     table: &mut self.table,
                 }
