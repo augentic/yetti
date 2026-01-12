@@ -79,7 +79,6 @@ async fn cache() -> Result<impl IntoResponse, Infallible> {
         .body(Empty::<Bytes>::new())
         .expect("failed to build request");
 
-
     let response = yetti_wasi_http::handle(request).await.unwrap();
     let (parts, body) = response.into_parts();
     let http_response = http::Response::from_parts(parts, Body::from(body));
@@ -89,12 +88,12 @@ async fn cache() -> Result<impl IntoResponse, Infallible> {
 
 /// Fetches from origin and caches the response.
 #[yetti_wasi_otel::instrument]
-async fn origin(body: Bytes) -> HttpResult<Json<Value>> {
+async fn origin() -> HttpResult<Json<Value>> {
     let request = http::Request::builder()
         .method(Method::GET)
         .uri("https://jsonplaceholder.cypress.io/posts")
         .header(CACHE_CONTROL, "no-cache, max-age=300")
-        .body(Full::new(body))
+        .body(Empty::<Bytes>::new())
         .expect("failed to build request");
 
     let response = yetti_wasi_http::handle(request).await?;
