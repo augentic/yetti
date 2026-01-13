@@ -32,32 +32,32 @@ use base64ct::{Base64, Encoding};
 use bytes::Bytes;
 use http::Method;
 use http::header::{CACHE_CONTROL, IF_NONE_MATCH};
-use http_body_util::{Empty, Full};
+use http_body_util::Empty;
+use qwasr_sdk::HttpResult;
+use qwasr_wasi_http::CacheOptions;
 use serde_json::{Value, json};
 use tracing::Level;
-use wasi_http::CacheOptions;
 use wasip3::exports::http::handler::Guest;
 use wasip3::http::types::{ErrorCode, Request, Response};
-use yetti_sdk::HttpResult;
 
 struct HttpGuest;
 wasip3::http::proxy::export!(HttpGuest);
 
 impl Guest for HttpGuest {
     /// Routes incoming requests to appropriate handlers.
-    #[wasi_otel::instrument(name = "http_guest_handle", level = Level::DEBUG)]
+    #[qwasr_wasi_otel::instrument(name = "http_guest_handle", level = Level::DEBUG)]
     async fn handle(request: Request) -> Result<Response, ErrorCode> {
         let router = Router::new()
             .route("/echo", get(echo))
             .route("/cache", get(cache))
             .route("/origin", post(origin))
             .route("/client-cert", post(client_cert));
-        wasi_http::serve(router, request).await
+        qwasr_wasi_http::serve(router, request).await
     }
 }
 
 /// Simple echo handler that returns the request body with a greeting.
-#[wasi_otel::instrument]
+#[qwasr_wasi_otel::instrument]
 async fn echo(Json(body): Json<Value>) -> HttpResult<Json<Value>> {
     Ok(Json(json!({
         "message": "Hello, World!",
@@ -66,7 +66,7 @@ async fn echo(Json(body): Json<Value>) -> HttpResult<Json<Value>> {
 }
 
 /// Fetches data with HTTP caching enabled.
-#[wasi_otel::instrument]
+#[qwasr_wasi_otel::instrument]
 async fn cache() -> Result<impl IntoResponse, Infallible> {
     let request = http::Request::builder()
         .method(Method::GET)
@@ -79,7 +79,7 @@ async fn cache() -> Result<impl IntoResponse, Infallible> {
         .body(Empty::<Bytes>::new())
         .expect("failed to build request");
 
-    let response = wasi_http::handle(request).await.unwrap();
+    let response = qwasr_wasi_http::handle(request).await.unwrap();
     let (parts, body) = response.into_parts();
     let http_response = http::Response::from_parts(parts, Body::from(body));
 
@@ -87,16 +87,16 @@ async fn cache() -> Result<impl IntoResponse, Infallible> {
 }
 
 /// Fetches from origin and caches the response.
-#[wasi_otel::instrument]
-async fn origin(body: Bytes) -> HttpResult<Json<Value>> {
+#[qwasr_wasi_otel::instrument]
+async fn origin() -> HttpResult<Json<Value>> {
     let request = http::Request::builder()
-        .method(Method::POST)
+        .method(Method::GET)
         .uri("https://jsonplaceholder.cypress.io/posts")
         .header(CACHE_CONTROL, "no-cache, max-age=300")
-        .body(Full::new(body))
+        .body(Empty::<Bytes>::new())
         .expect("failed to build request");
 
-    let response = wasi_http::handle(request).await?;
+    let response = qwasr_wasi_http::handle(request).await?;
     let body = response.into_body();
     let body = serde_json::from_slice::<Value>(&body).context("issue parsing response body")?;
 
@@ -104,7 +104,7 @@ async fn origin(body: Bytes) -> HttpResult<Json<Value>> {
 }
 
 /// Demonstrates mTLS client certificate authentication.
-#[wasi_otel::instrument]
+#[qwasr_wasi_otel::instrument]
 async fn client_cert() -> HttpResult<Json<Value>> {
     let auth_cert = "
         -----BEGIN CERTIFICATE-----
@@ -125,7 +125,7 @@ async fn client_cert() -> HttpResult<Json<Value>> {
         .body(Empty::<Bytes>::new())
         .expect("Failed to build request");
 
-    let response = wasi_http::handle(request).await?;
+    let response = qwasr_wasi_http::handle(request).await?;
     let body = response.into_body();
     let body_str = Base64::encode_string(&body);
 

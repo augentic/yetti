@@ -8,10 +8,10 @@ use std::fmt::Debug;
 
 use anyhow::Result;
 pub use default_impl::ConfigDefault;
+use qwasr::{Host, Server, State};
 use wasmtime::component::{HasData, Linker};
 pub use wasmtime_wasi_config;
 use wasmtime_wasi_config::WasiConfigVariables;
-use yetti::{Host, Server, State};
 
 #[derive(Debug)]
 pub struct WasiConfig;
@@ -50,12 +50,12 @@ pub trait WasiConfigCtx: Debug + Send + Sync + 'static {
 }
 
 #[macro_export]
-macro_rules! wasi_view {
+macro_rules! qwasr_wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_config::WasiConfigView for $store_ctx {
-            fn config(&mut self) -> yetti_wasi_config::wasmtime_wasi_config::WasiConfig<'_> {
-                let vars = yetti_wasi_config::WasiConfigCtx::get_config(&self.$field_name);
-                yetti_wasi_config::wasmtime_wasi_config::WasiConfig::from(vars)
+        impl qwasr_wasi_config::WasiConfigView for $store_ctx {
+            fn config(&mut self) -> qwasr_wasi_config::wasmtime_wasi_config::WasiConfig<'_> {
+                let vars = qwasr_wasi_config::WasiConfigCtx::get_config(&self.$field_name);
+                qwasr_wasi_config::wasmtime_wasi_config::WasiConfig::from(vars)
             }
         }
     };

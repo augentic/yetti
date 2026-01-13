@@ -8,8 +8,8 @@ use std::sync::Arc;
 use anyhow::Result;
 use futures::FutureExt;
 use parking_lot::RwLock;
+use qwasr::Backend;
 use tracing::instrument;
-use yetti::Backend;
 
 use crate::host::WasiKeyValueCtx;
 use crate::host::resource::{Bucket, FutureResult};
@@ -19,7 +19,7 @@ type Store = Arc<RwLock<HashMap<String, HashMap<String, Vec<u8>>>>>;
 #[derive(Debug, Clone, Default)]
 pub struct ConnectOptions;
 
-impl yetti::FromEnv for ConnectOptions {
+impl qwasr::FromEnv for ConnectOptions {
     fn from_env() -> Result<Self> {
         Ok(Self)
     }

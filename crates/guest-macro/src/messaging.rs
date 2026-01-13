@@ -47,18 +47,18 @@ pub fn expand(messaging: &Messaging, config: &Config) -> TokenStream {
 
     quote! {
         mod messaging {
-            use yetti_sdk::wasi_messaging::types::{Error, Message};
-            use yetti_sdk::{wasi_messaging, wasi_otel};
-            use yetti_sdk::Handler;
+            use qwasr_sdk::qwasr_wasi_messaging::types::{Error, Message};
+            use qwasr_sdk::{wasi_messaging, qwasr_wasi_otel};
+            use qwasr_sdk::Handler;
 
             use super::*;
 
             pub struct Messaging;
-            wasi_messaging::export!(Messaging with_types_in wasi_messaging);
+            qwasr_wasi_messaging::export!(Messaging with_types_in qwasr_wasi_messaging);
 
             // Message handler
-            impl wasi_messaging::incoming_handler::Guest for Messaging {
-                #[wasi_otel::instrument]
+            impl qwasr_wasi_messaging::incoming_handler::Guest for Messaging {
+                #[qwasr_wasi_otel::instrument]
                 async fn handle(message: Message) -> Result<(), Error> {
                     let topic = message
                         .topic()
@@ -95,7 +95,7 @@ fn expand_handler(topic: &Topic, config: &Config) -> TokenStream {
     let provider = &config.provider;
 
     quote! {
-        #[wasi_otel::instrument]
+        #[qwasr_wasi_otel::instrument]
         async fn #handler_fn(payload: Vec<u8>) -> Result<()> {
              #message::handler(payload)?
                  .provider(&#provider::new())

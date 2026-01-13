@@ -4,11 +4,11 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, anyhow};
+use qwasr_otel::Telemetry;
 use tracing::instrument;
 use wasmtime::component::{Component, InstancePre, Linker};
 use wasmtime::{Config, Engine};
 use wasmtime_wasi::WasiView;
-use yetti_otel::Telemetry;
 
 use crate::traits::Host;
 

@@ -3,21 +3,6 @@
 //! This module demonstrates comprehensive OpenTelemetry instrumentation in a
 //! WebAssembly guest. It showcases both the `tracing` API and the native
 //! OpenTelemetry API for distributed tracing and metrics.
-//!
-//! ## Two Approaches
-//!
-//! 1. **Tracing API**: Ergonomic, Rust-idiomatic, uses `#[instrument]` macro
-//! 2. **OpenTelemetry API**: Direct OTel SDK access for advanced use cases
-//!
-//! Both approaches export telemetry through the host's WASI OTel implementation,
-//! which forwards to an OpenTelemetry Collector via OTLP.
-//!
-//! ## What Gets Exported
-//!
-//! - **Spans**: Timing and context for operations (traces)
-//! - **Events**: Timestamped log entries within spans
-//! - **Attributes**: Key-value metadata on spans
-//! - **Metrics**: Counters and gauges for measurements
 
 #![cfg(target_arch = "wasm32")]
 
@@ -26,19 +11,19 @@ use axum::{Json, Router};
 use http::Method;
 use opentelemetry::trace::{TraceContextExt, Tracer};
 use opentelemetry::{KeyValue, global};
+use qwasr_sdk::HttpResult;
 use serde_json::{Value, json};
 use tower_http::cors::{Any, CorsLayer};
 use tracing::Level;
 use wasip3::exports::http::handler::Guest;
 use wasip3::http::types::{ErrorCode, Request, Response};
-use yetti_sdk::HttpResult;
 
 struct Http;
 wasip3::http::proxy::export!(Http);
 
 impl Guest for Http {
     /// Routes requests and demonstrates telemetry patterns.
-    #[wasi_otel::instrument(name = "http_guest_handle", level = Level::DEBUG)]
+    #[qwasr_wasi_otel::instrument(name = "http_guest_handle", level = Level::DEBUG)]
     async fn handle(request: Request) -> Result<Response, ErrorCode> {
         // tracing-based metrics
         tracing::info!(monotonic_counter.tracing_counter = 1, key1 = "value 1");
@@ -79,7 +64,7 @@ impl Guest for Http {
                     .route("/", post(handler))
                     .route("/", options(handle_options));
 
-                wasi_http::serve(router, request)
+                qwasr_wasi_http::serve(router, request)
             })
             .await
     }
@@ -87,7 +72,7 @@ impl Guest for Http {
 
 /// Simple JSON echo handler.
 #[axum::debug_handler]
-#[wasi_otel::instrument]
+#[qwasr_wasi_otel::instrument]
 async fn handler(Json(body): Json<Value>) -> HttpResult<Json<Value>> {
     tracing::info!("handling request: {:?}", body);
     Ok(Json(json!({

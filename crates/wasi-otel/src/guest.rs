@@ -28,25 +28,6 @@ mod generated {
 }
 
 /// Re-exported `instrument` macro for use in guest code.
-pub use wasi_otel_attr::instrument;
+pub use qwasr_wasi_otel_attr::instrument;
 
-use self::init::ExitGuard;
-use crate::guest::init::INIT;
-
-/// Initialize OpenTelemetry SDK and tracing subscriber.
-pub fn init() -> Option<ExitGuard> {
-    // if init::INIT.read().is_ok_and(|x| *x) {
-    //     return None;
-    // }
-    if INIT.get().is_some() {
-        return None;
-    }
-
-    match init::init() {
-        Ok(guard) => Some(guard),
-        Err(e) => {
-            ::tracing::error!("failed to initialize: {e}");
-            None
-        }
-    }
-}
+pub use crate::guest::init::*;

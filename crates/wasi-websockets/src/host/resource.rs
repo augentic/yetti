@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use std::ops::Deref;
 use std::sync::Arc;
 
-pub use yetti::FutureResult;
+pub use qwasr::FutureResult;
 
 use crate::host::generated::wasi::websockets::types::Peer;
 

@@ -9,10 +9,10 @@ use syn::parse_macro_input;
 /// # Example
 ///
 /// ```ignore
-/// yetti::runtime!({
-///     wasi_http: WasiHttp,
-///     wasi_otel: DefaultOtel,
-///     wasi_blobstore: MongoDb,
+/// qwasr::runtime!({
+///     qwasr_wasi_http: WasiHttp,
+///     qwasr_wasi_otel: DefaultOtel,
+///     qwasr_wasi_blobstore: MongoDb,
 /// });
 /// ```
 #[proc_macro]

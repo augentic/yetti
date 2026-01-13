@@ -21,12 +21,10 @@ pub fn instrument(args: TokenStream, item: TokenStream) -> TokenStream {
     let signature = &item_fn.sig;
     let body = body(attrs, &item_fn);
 
-    // println!("quote!{signature} {{\n {body}\n}}");
-
     // recreate function with the instrument macro wrapping the body
     let new_fn = quote! {
         #signature {
-            let _guard = ::wasi_otel::init();
+            let _guard = ::qwasr_wasi_otel::init();
             #body
         }
     };

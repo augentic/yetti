@@ -115,8 +115,8 @@ pub fn expand(config: &Config) -> TokenStream {
     quote! {
         #[cfg(target_arch = "wasm32")]
         mod __buildgen_guest {
-            use yetti_sdk::anyhow::{Context, Result};
-            use yetti_sdk::api::Client;
+            use qwasr_sdk::anyhow::{Context, Result};
+            use qwasr_sdk::api::Client;
 
             use super::*;
 

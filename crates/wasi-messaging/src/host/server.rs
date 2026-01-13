@@ -2,9 +2,9 @@ use std::env;
 
 use anyhow::{Context, Result, anyhow};
 use futures::StreamExt;
+use qwasr::State;
 use tracing::{Instrument, debug_span, instrument};
 use wasmtime::Store;
-use yetti::State;
 
 use crate::host::WasiMessagingView;
 use crate::host::generated::Messaging;

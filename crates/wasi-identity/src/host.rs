@@ -31,10 +31,10 @@ mod generated {
 use std::fmt::Debug;
 use std::sync::Arc;
 
+pub use qwasr::FutureResult;
+use qwasr::{Host, Server, State};
 use wasmtime::component::{HasData, Linker};
 use wasmtime_wasi::ResourceTable;
-pub use yetti::FutureResult;
-use yetti::{Host, Server, State};
 
 pub use self::default_impl::IdentityDefault;
 use self::generated::wasi::identity::credentials;
@@ -85,11 +85,11 @@ pub trait WasiIdentityCtx: Debug + Send + Sync + 'static {
 }
 
 #[macro_export]
-macro_rules! wasi_view {
+macro_rules! qwasr_wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_identity::WasiIdentityView for $store_ctx {
-            fn identity(&mut self) -> yetti_wasi_identity::WasiIdentityCtxView<'_> {
-                yetti_wasi_identity::WasiIdentityCtxView {
+        impl qwasr_wasi_identity::WasiIdentityView for $store_ctx {
+            fn identity(&mut self) -> qwasr_wasi_identity::WasiIdentityCtxView<'_> {
+                qwasr_wasi_identity::WasiIdentityCtxView {
                     ctx: &mut self.$field_name,
                     table: &mut self.table,
                 }

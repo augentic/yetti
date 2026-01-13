@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
+pub use qwasr::FutureResult;
 use wasmtime::component::{Access, Accessor, Resource};
-pub use yetti::FutureResult;
 
 use crate::host::generated::wasi::websockets::store::{
     Host, HostServer, HostServerWithStore, HostWithStore,

@@ -6,6 +6,7 @@ use anyhow::{Context, Result, anyhow};
 use cfg_if::cfg_if;
 use opentelemetry::{KeyValue, Value};
 use opentelemetry_sdk::Resource;
+use opentelemetry_sdk::error::OTelSdkError;
 use tracing_subscriber::Registry;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -29,9 +30,32 @@ cfg_if! {
     }
 }
 
-pub static INIT: OnceLock<bool> = OnceLock::new();
+#[cfg(feature = "tracing")]
+static TRACING: OnceLock<SdkTracerProvider> = OnceLock::new();
+#[cfg(feature = "metrics")]
+static METRICS: OnceLock<SdkMeterProvider> = OnceLock::new();
 
+/// Initialize OpenTelemetry SDK and tracing subscriber.
+///
+/// # Errors
+///
+/// Returns an error if the telemetry system fails to initialize, such as if
+/// the OpenTelemetry exporter cannot be created or if setting the global
+/// subscriber fails.
 pub fn init() -> Result<ExitGuard> {
+    println!("initializing telemetry");
+    println!("tracing: {:?}", TRACING.get());
+    println!("metrics: {:?}", METRICS.get());
+
+    #[cfg(feature = "tracing")]
+    if TRACING.get().is_some() {
+        return Ok(ExitGuard);
+    }
+    #[cfg(feature = "metrics")]
+    if METRICS.get().is_some() {
+        return Ok(ExitGuard);
+    }
+
     // get WASI host telemetry resource
     let resource: Resource = resource::resource().into();
 
@@ -43,14 +67,15 @@ pub fn init() -> Result<ExitGuard> {
     let fmt_layer = tracing_subscriber::fmt::layer();
     let registry = Registry::default().with(filter_layer).with(fmt_layer);
 
-    let mut guard = ExitGuard::default();
+    // let mut guard = ExitGuard::default();
 
     // initialize tracing
     #[cfg(feature = "tracing")]
     let registry = {
         let tracer_provider = tracing::init(resource.clone());
         let tracing_layer = tracing_layer().with_tracer(tracer_provider.tracer("global"));
-        guard.tracing = tracer_provider;
+        // guard.tracing = tracer_provider;
+        TRACING.set(tracer_provider).map_err(|_e| anyhow!("failed to set tracing provider"))?;
         registry.with(tracing_layer)
     };
 
@@ -59,34 +84,34 @@ pub fn init() -> Result<ExitGuard> {
     let registry = {
         let meter_provider = metrics::init(resource);
         let metrics_layer = MetricsLayer::new(meter_provider.clone());
-        guard.metrics = meter_provider;
+        // guard.metrics = meter_provider;
+        METRICS.set(meter_provider).map_err(|_e| anyhow!("failed to set metrics provider"))?;
         registry.with(metrics_layer)
     };
 
     registry.try_init().context("issue initializing subscriber")?;
-    INIT.set(true).map_err(|_e| anyhow!("wasi-otel already initialized"))?;
 
-    Ok(guard)
+    Ok(ExitGuard)
 }
 
 /// [`ExitGuard`] provides a guard to export telemetry data on drop.
-#[derive(Debug, Default)]
-pub struct ExitGuard {
-    #[cfg(feature = "tracing")]
-    tracing: SdkTracerProvider,
-    #[cfg(feature = "metrics")]
-    metrics: SdkMeterProvider,
-}
+pub struct ExitGuard;
 
 impl Drop for ExitGuard {
     fn drop(&mut self) {
         #[cfg(feature = "tracing")]
-        if let Err(e) = self.tracing.shutdown() {
-            ::tracing::error!("failed to export tracing: {e}");
+        if let Some(tracer_provider) = TRACING.get() {
+            match tracer_provider.shutdown() {
+                Ok(()) | Err(OTelSdkError::AlreadyShutdown) => (),
+                Err(e) => ::tracing::error!("failed to export tracing: {e}"),
+            }
         }
         #[cfg(feature = "metrics")]
-        if let Err(e) = self.metrics.shutdown() {
-            ::tracing::error!("failed to export metrics: {e}");
+        if let Some(meter_provider) = METRICS.get() {
+            match meter_provider.shutdown() {
+                Ok(()) | Err(OTelSdkError::AlreadyShutdown) => (),
+                Err(e) => ::tracing::error!("failed to export metrics: {e}"),
+            }
         }
     }
 }

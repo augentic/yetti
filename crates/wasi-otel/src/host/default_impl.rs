@@ -10,15 +10,15 @@ use anyhow::Result;
 use futures::FutureExt;
 use opentelemetry_proto::tonic::collector::metrics::v1::ExportMetricsServiceRequest;
 use opentelemetry_proto::tonic::collector::trace::v1::ExportTraceServiceRequest;
+use qwasr::{Backend, FutureResult};
 use tracing::instrument;
-use yetti::{Backend, FutureResult};
 
 use crate::host::WasiOtelCtx;
 
 #[derive(Debug, Clone, Default)]
 pub struct ConnectOptions;
 
-impl yetti::FromEnv for ConnectOptions {
+impl qwasr::FromEnv for ConnectOptions {
     fn from_env() -> Result<Self> {
         Ok(Self)
     }
@@ -51,7 +51,7 @@ impl WasiOtelCtx for OtelDefault {
                 .iter()
                 .map(|rs| rs.scope_spans.iter().map(|ss| ss.spans.len()).sum::<usize>())
                 .sum::<usize>();
-            tracing::debug!("would export {span_count} trace spans (no-op default implementation)");
+            tracing::debug!("would export {span_count} spans (default implementation)");
             Ok(())
         }
         .boxed()
@@ -67,7 +67,7 @@ impl WasiOtelCtx for OtelDefault {
                 .iter()
                 .map(|rm| rm.scope_metrics.iter().map(|sm| sm.metrics.len()).sum::<usize>())
                 .sum::<usize>();
-            tracing::debug!("would export {metric_count} metrics (no-op default implementation)");
+            tracing::debug!("would export {metric_count} metrics (default implementation)");
             Ok(())
         }
         .boxed()

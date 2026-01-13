@@ -165,9 +165,9 @@ pub fn expand(http: &Http, config: &Config) -> TokenStream {
 
     quote! {
         mod http {
-            use yetti_sdk::api::{HttpResult, Reply};
-            use yetti_sdk::{axum, wasi_http, wasi_otel, wasip3};
-            use yetti_sdk::Handler;
+            use qwasr_sdk::api::{HttpResult, Reply};
+            use qwasr_sdk::{axum, qwasr_wasi_http, qwasr_wasi_otel, wasip3};
+            use qwasr_sdk::Handler;
 
             use super::*;
 
@@ -175,13 +175,13 @@ pub fn expand(http: &Http, config: &Config) -> TokenStream {
             wasip3::http::proxy::export!(Http);
 
             impl wasip3::exports::http::handler::Guest for Http {
-                #[wasi_otel::instrument]
+                #[qwasr_wasi_otel::instrument]
                 async fn handle(
                     request: wasip3::http::types::Request,
                 ) -> Result<wasip3::http::types::Response, wasip3::http::types::ErrorCode> {
                     let router = axum::Router::new()
                         #(#routes)*;
-                    wasi_http::serve(router, request).await
+                    qwasr_wasi_http::serve(router, request).await
                 }
             }
 
@@ -224,7 +224,7 @@ fn expand_handler(route: &Route, config: &Config) -> TokenStream {
     };
 
     quote! {
-        #[wasi_otel::instrument]
+        #[qwasr_wasi_otel::instrument]
         async fn #function(#args) -> HttpResult<Reply<#reply>> {
             #request::handler(#input)?
                 .provider(&#provider::new())

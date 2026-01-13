@@ -1,5 +1,5 @@
 [package]
-name = "yetti-wasi-blobstore"
+name = "qwasr-wasi-blobstore"
 description = "WASI blobstore WIT implementation"
 readme = "README.md"
 authors.workspace = true
@@ -22,7 +22,7 @@ workspace = true
 anyhow.workspace = true
 bytes.workspace = true
 futures.workspace = true
-yetti.workspace = true
+qwasr.workspace = true
 parking_lot.workspace = true
 tracing.workspace = true
 wasmtime.workspace = true

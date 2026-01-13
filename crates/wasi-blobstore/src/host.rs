@@ -35,11 +35,11 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use bytes::Bytes;
+pub use qwasr::FutureResult;
+use qwasr::{Host, Server, State};
 pub use resource::*;
 use wasmtime::component::{HasData, Linker, ResourceTable};
 use wasmtime_wasi::p2::pipe::MemoryOutputPipe;
-pub use yetti::FutureResult;
-use yetti::{Host, Server, State};
 
 pub use self::default_impl::BlobstoreDefault;
 pub use self::generated::wasi::blobstore::container::{ContainerMetadata, ObjectMetadata};
@@ -106,11 +106,11 @@ pub trait WasiBlobstoreCtx: Debug + Send + Sync + 'static {
 }
 
 #[macro_export]
-macro_rules! wasi_view {
+macro_rules! qwasr_wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_blobstore::WasiBlobstoreView for $store_ctx {
-            fn blobstore(&mut self) -> yetti_wasi_blobstore::WasiBlobstoreCtxView<'_> {
-                yetti_wasi_blobstore::WasiBlobstoreCtxView {
+        impl qwasr_wasi_blobstore::WasiBlobstoreView for $store_ctx {
+            fn blobstore(&mut self) -> qwasr_wasi_blobstore::WasiBlobstoreCtxView<'_> {
+                qwasr_wasi_blobstore::WasiBlobstoreCtxView {
                     ctx: &mut self.$field_name,
                     table: &mut self.table,
                 }
@@ -129,7 +129,7 @@ macro_rules! wasi_view {
 // }
 
 // #[macro_export]
-// macro_rules! wasi_view {
+// macro_rules! qwasr_wasi_view {
 //     ($store_ctx:ty, $field_name:ident) => {
 //         impl View<WasiBlobstore, $store_ctx> for $store_ctx {
 //             fn data(&mut self) -> <WasiBlobstore as HasData>::Data<'_> {

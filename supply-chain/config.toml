@@ -47,7 +47,7 @@ version = "0.5.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.base64ct]]
-version = "1.8.2"
+version = "1.8.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.bytecheck]]
@@ -171,7 +171,7 @@ version = "0.21.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.data-encoding]]
-version = "2.9.0"
+version = "2.10.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.deranged]]
@@ -219,7 +219,7 @@ version = "0.14.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.getrandom]]
-version = "0.2.16"
+version = "0.2.17"
 criteria = "safe-to-deploy"
 
 [[exemptions.getrandom]]
@@ -367,11 +367,11 @@ version = "1.9.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.prost]]
-version = "0.13.1"
+version = "0.14.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.prost-derive]]
-version = "0.13.1"
+version = "0.14.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.ptr_meta]]
@@ -775,5 +775,5 @@ version = "0.11.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.zmij]]
-version = "1.0.12"
+version = "1.0.13"
 criteria = "safe-to-deploy"

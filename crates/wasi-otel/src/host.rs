@@ -25,8 +25,8 @@ use std::fmt::Debug;
 
 use opentelemetry_proto::tonic::collector::metrics::v1::ExportMetricsServiceRequest;
 use opentelemetry_proto::tonic::collector::trace::v1::ExportTraceServiceRequest;
+use qwasr::{FutureResult, Host, Server, State};
 use wasmtime::component::{HasData, Linker, ResourceTable};
-use yetti::{FutureResult, Host, Server, State};
 
 pub use self::default_impl::OtelDefault;
 use self::generated::wasi::otel::{metrics, resource, tracing, types};
@@ -89,11 +89,11 @@ pub trait WasiOtelCtx: Debug + Send + Sync + 'static {
 }
 
 #[macro_export]
-macro_rules! wasi_view {
+macro_rules! qwasr_wasi_view {
     ($store_ctx:ty, $field_name:ident) => {
-        impl yetti_wasi_otel::WasiOtelView for $store_ctx {
-            fn otel(&mut self) -> yetti_wasi_otel::WasiOtelCtxView<'_> {
-                yetti_wasi_otel::WasiOtelCtxView {
+        impl qwasr_wasi_otel::WasiOtelView for $store_ctx {
+            fn otel(&mut self) -> qwasr_wasi_otel::WasiOtelCtxView<'_> {
+                qwasr_wasi_otel::WasiOtelCtxView {
                     ctx: &mut self.$field_name,
                     table: &mut self.table,
                 }
