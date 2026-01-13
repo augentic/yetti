@@ -43,10 +43,6 @@ static METRICS: OnceLock<SdkMeterProvider> = OnceLock::new();
 /// the OpenTelemetry exporter cannot be created or if setting the global
 /// subscriber fails.
 pub fn init() -> Result<ExitGuard> {
-    println!("initializing telemetry");
-    println!("tracing: {:?}", TRACING.get());
-    println!("metrics: {:?}", METRICS.get());
-
     #[cfg(feature = "tracing")]
     if TRACING.get().is_some() {
         return Ok(ExitGuard);
