@@ -16,13 +16,13 @@
 use anyhow::Context;
 use axum::routing::get;
 use axum::{Json, Router};
+use qwasr_sdk::HttpResult;
+use qwasr_wasi_identity::credentials::get_identity;
 use serde_json::{Value, json};
 use tracing::Level;
 use wasip3::exports::http::handler::Guest;
 use wasip3::http::types::{ErrorCode, Request, Response};
 use wit_bindgen::block_on;
-use qwasr_sdk::HttpResult;
-use qwasr_wasi_identity::credentials::get_identity;
 
 const SCOPE: &str = "https://management.azure.com/.default";
 

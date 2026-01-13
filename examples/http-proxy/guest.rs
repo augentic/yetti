@@ -33,12 +33,12 @@ use bytes::Bytes;
 use http::Method;
 use http::header::{CACHE_CONTROL, IF_NONE_MATCH};
 use http_body_util::Empty;
+use qwasr_sdk::HttpResult;
+use qwasr_wasi_http::CacheOptions;
 use serde_json::{Value, json};
 use tracing::Level;
 use wasip3::exports::http::handler::Guest;
 use wasip3::http::types::{ErrorCode, Request, Response};
-use qwasr_sdk::HttpResult;
-use qwasr_wasi_http::CacheOptions;
 
 struct HttpGuest;
 wasip3::http::proxy::export!(HttpGuest);

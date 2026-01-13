@@ -10,8 +10,8 @@ use anyhow::Result;
 use futures::FutureExt;
 use opentelemetry_proto::tonic::collector::metrics::v1::ExportMetricsServiceRequest;
 use opentelemetry_proto::tonic::collector::trace::v1::ExportTraceServiceRequest;
-use tracing::instrument;
 use qwasr::{Backend, FutureResult};
+use tracing::instrument;
 
 use crate::host::WasiOtelCtx;
 

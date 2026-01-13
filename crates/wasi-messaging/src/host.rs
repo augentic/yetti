@@ -37,10 +37,10 @@ mod generated {
 use std::fmt::Debug;
 use std::sync::Arc;
 
-use wasmtime::component::{HasData, Linker};
-use wasmtime_wasi::{ResourceTable, ResourceTableError};
 pub use qwasr::FutureResult;
 use qwasr::{Host, Server, State};
+use wasmtime::component::{HasData, Linker};
+use wasmtime_wasi::{ResourceTable, ResourceTableError};
 
 pub use self::default_impl::MessagingDefault;
 pub use self::generated::Messaging;

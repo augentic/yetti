@@ -11,8 +11,8 @@ pub use qwasr_guest_macro::*;
 pub use {anyhow, axum, bytes, http, http_body, tracing};
 #[cfg(target_arch = "wasm32")]
 pub use {
-    wasip3, wit_bindgen, qwasr_wasi_http, qwasr_wasi_identity, qwasr_wasi_keyvalue,
-    qwasr_wasi_messaging, qwasr_wasi_otel,
+    qwasr_wasi_http, qwasr_wasi_identity, qwasr_wasi_keyvalue, qwasr_wasi_messaging,
+    qwasr_wasi_otel, wasip3, wit_bindgen,
 };
 
 pub use crate::api::*;

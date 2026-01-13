@@ -11,8 +11,8 @@ use oauth2::{
     ClientId, ClientSecret, EmptyExtraTokenFields, Scope, StandardTokenResponse,
     TokenResponse as _, TokenUrl,
 };
-use tracing::instrument;
 use qwasr::Backend;
+use tracing::instrument;
 
 use crate::host::WasiIdentityCtx;
 pub use crate::host::generated::wasi::identity::credentials::AccessToken;

@@ -11,9 +11,9 @@ use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 
 use anyhow::Result;
+use qwasr::Backend;
 use tracing::instrument;
 use wasmtime_wasi_config::WasiConfigVariables;
-use qwasr::Backend;
 
 use crate::WasiConfigCtx;
 

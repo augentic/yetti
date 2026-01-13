@@ -28,12 +28,12 @@ use std::time::Instant;
 use axum::routing::post;
 use axum::{Json, Router};
 use bytes::Bytes;
-use serde_json::{Value, json};
-use wasip3::exports::http::handler::Guest;
-use wasip3::http::types::{ErrorCode, Request, Response};
 use qwasr_sdk::HttpResult;
 use qwasr_wasi_messaging::types::{Client, Error, Message};
 use qwasr_wasi_messaging::{producer, request_reply};
+use serde_json::{Value, json};
+use wasip3::exports::http::handler::Guest;
+use wasip3::http::types::{ErrorCode, Request, Response};
 
 // ----------------------------------------------------------------------------
 // HTTP Interface

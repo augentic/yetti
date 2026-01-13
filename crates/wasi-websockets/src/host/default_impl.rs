@@ -13,9 +13,9 @@ use std::sync::Arc;
 use anyhow::Result;
 use futures::FutureExt;
 use futures_util::SinkExt;
+use qwasr::{Backend, FutureResult};
 use tokio_tungstenite::tungstenite::{Bytes, Message};
 use tracing::instrument;
-use qwasr::{Backend, FutureResult};
 
 use crate::host::WebSocketsCtx;
 use crate::host::generated::wasi::websockets::types::Peer;

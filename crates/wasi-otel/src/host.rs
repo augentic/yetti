@@ -25,8 +25,8 @@ use std::fmt::Debug;
 
 use opentelemetry_proto::tonic::collector::metrics::v1::ExportMetricsServiceRequest;
 use opentelemetry_proto::tonic::collector::trace::v1::ExportTraceServiceRequest;
-use wasmtime::component::{HasData, Linker, ResourceTable};
 use qwasr::{FutureResult, Host, Server, State};
+use wasmtime::component::{HasData, Linker, ResourceTable};
 
 pub use self::default_impl::OtelDefault;
 use self::generated::wasi::otel::{metrics, resource, tracing, types};

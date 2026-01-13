@@ -32,11 +32,11 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 use anyhow::Result;
+use qwasr::{Host, Server, State};
 use server::run_server;
 use store_impl::FutureResult;
 use wasmtime::component::{HasData, Linker};
 use wasmtime_wasi::ResourceTable;
-use qwasr::{Host, Server, State};
 
 pub use self::default_impl::WebSocketsDefault;
 use self::generated::wasi::websockets::{store, types as generated_types};

@@ -35,11 +35,11 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use bytes::Bytes;
+pub use qwasr::FutureResult;
+use qwasr::{Host, Server, State};
 pub use resource::*;
 use wasmtime::component::{HasData, Linker, ResourceTable};
 use wasmtime_wasi::p2::pipe::MemoryOutputPipe;
-pub use qwasr::FutureResult;
-use qwasr::{Host, Server, State};
 
 pub use self::default_impl::BlobstoreDefault;
 pub use self::generated::wasi::blobstore::container::{ContainerMetadata, ObjectMetadata};

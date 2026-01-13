@@ -9,8 +9,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::{Result, anyhow};
 use futures::FutureExt;
 use parking_lot::RwLock;
-use tracing::instrument;
 use qwasr::Backend;
+use tracing::instrument;
 
 use crate::host::WasiBlobstoreCtx;
 use crate::host::generated::wasi::blobstore::container::{ContainerMetadata, ObjectMetadata};

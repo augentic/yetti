@@ -8,8 +8,8 @@ use std::sync::Arc;
 use anyhow::Result;
 use futures::FutureExt;
 use parking_lot::RwLock;
-use tracing::instrument;
 use qwasr::Backend;
+use tracing::instrument;
 
 use crate::host::WasiKeyValueCtx;
 use crate::host::resource::{Bucket, FutureResult};

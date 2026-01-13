@@ -8,10 +8,10 @@ use std::fmt::Debug;
 
 use anyhow::Result;
 pub use default_impl::ConfigDefault;
+use qwasr::{Host, Server, State};
 use wasmtime::component::{HasData, Linker};
 pub use wasmtime_wasi_config;
 use wasmtime_wasi_config::WasiConfigVariables;
-use qwasr::{Host, Server, State};
 
 #[derive(Debug)]
 pub struct WasiConfig;

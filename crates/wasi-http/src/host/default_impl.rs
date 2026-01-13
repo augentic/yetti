@@ -12,11 +12,11 @@ use http::header::{
 use http::{Request, Response};
 use http_body_util::BodyExt;
 use http_body_util::combinators::UnsyncBoxBody;
+use qwasr::Backend;
 use tracing::instrument;
 use wasmtime_wasi::TrappableError;
 use wasmtime_wasi_http::p3::bindings::http::types::ErrorCode;
 use wasmtime_wasi_http::p3::{self, RequestOptions};
-use qwasr::Backend;
 
 pub type HttpResult<T> = Result<T, HttpError>;
 pub type HttpError = TrappableError<ErrorCode>;

@@ -12,10 +12,10 @@ use std::sync::Arc;
 use anyhow::{Context, Result};
 use fromenv::FromEnv;
 use futures::FutureExt;
+use qwasr::Backend;
 use rusqlite::types::ValueRef;
 use rusqlite::{Connection as SqliteConnection, params_from_iter};
 use tracing::instrument;
-use qwasr::Backend;
 
 use crate::host::resource::{Connection, FutureResult};
 use crate::host::{DataType, Field, Row, WasiSqlCtx};

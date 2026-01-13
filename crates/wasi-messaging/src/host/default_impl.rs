@@ -8,10 +8,10 @@ use std::sync::Arc;
 use anyhow::{Result, anyhow};
 use futures::FutureExt;
 use futures::stream::StreamExt;
+use qwasr::Backend;
 use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio_stream::wrappers::BroadcastStream;
 use tracing::instrument;
-use qwasr::Backend;
 
 use crate::host::WasiMessagingCtx;
 use crate::host::resource::{

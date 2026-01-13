@@ -18,12 +18,12 @@ use anyhow::Context;
 use axum::routing::post;
 use axum::{Json, Router};
 use bytes::Bytes;
+use qwasr_sdk::HttpResult;
+use qwasr_wasi_keyvalue::store;
 use serde_json::{Value, json};
 use tracing::Level;
 use wasip3::exports::http::handler::Guest;
 use wasip3::http::types::{ErrorCode, Request, Response};
-use qwasr_sdk::HttpResult;
-use qwasr_wasi_keyvalue::store;
 
 struct Http;
 wasip3::http::proxy::export!(Http);

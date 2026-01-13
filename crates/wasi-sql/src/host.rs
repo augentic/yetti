@@ -34,10 +34,10 @@ mod generated {
 use std::fmt::Debug;
 use std::sync::Arc;
 
-use wasmtime::component::{HasData, Linker};
-use wasmtime_wasi::ResourceTable;
 pub use qwasr::FutureResult;
 use qwasr::{Host, Server, State};
+use wasmtime::component::{HasData, Linker};
+use wasmtime_wasi::ResourceTable;
 
 use self::generated::wasi::sql::{readwrite, types};
 pub use crate::host::default_impl::SqlDefault;
