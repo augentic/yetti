@@ -3,21 +3,6 @@
 //! This module demonstrates comprehensive OpenTelemetry instrumentation in a
 //! WebAssembly guest. It showcases both the `tracing` API and the native
 //! OpenTelemetry API for distributed tracing and metrics.
-//!
-//! ## Two Approaches
-//!
-//! 1. **Tracing API**: Ergonomic, Rust-idiomatic, uses `#[instrument]` macro
-//! 2. **OpenTelemetry API**: Direct OTel SDK access for advanced use cases
-//!
-//! Both approaches export telemetry through the host's WASI OTel implementation,
-//! which forwards to an OpenTelemetry Collector via OTLP.
-//!
-//! ## What Gets Exported
-//!
-//! - **Spans**: Timing and context for operations (traces)
-//! - **Events**: Timestamped log entries within spans
-//! - **Attributes**: Key-value metadata on spans
-//! - **Metrics**: Counters and gauges for measurements
 
 #![cfg(target_arch = "wasm32")]
 
