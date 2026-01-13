@@ -42,14 +42,14 @@ static METRICS: OnceLock<SdkMeterProvider> = OnceLock::new();
 /// Returns an error if the telemetry system fails to initialize, such as if
 /// the OpenTelemetry exporter cannot be created or if setting the global
 /// subscriber fails.
-pub fn init() -> Result<ExitGuard> {
+pub fn init() -> Result<Option<ExitGuard>> {
     #[cfg(feature = "tracing")]
     if TRACING.get().is_some() {
-        return Ok(ExitGuard);
+        return Ok(None);
     }
     #[cfg(feature = "metrics")]
     if METRICS.get().is_some() {
-        return Ok(ExitGuard);
+        return Ok(None);
     }
 
     // get WASI host telemetry resource
@@ -62,8 +62,6 @@ pub fn init() -> Result<ExitGuard> {
         .add_directive("tonic=off".parse()?);
     let fmt_layer = tracing_subscriber::fmt::layer();
     let registry = Registry::default().with(filter_layer).with(fmt_layer);
-
-    // let mut guard = ExitGuard::default();
 
     // initialize tracing
     #[cfg(feature = "tracing")]
@@ -87,7 +85,7 @@ pub fn init() -> Result<ExitGuard> {
 
     registry.try_init().context("issue initializing subscriber")?;
 
-    Ok(ExitGuard)
+    Ok(Some(ExitGuard))
 }
 
 /// [`ExitGuard`] provides a guard to export telemetry data on drop.
