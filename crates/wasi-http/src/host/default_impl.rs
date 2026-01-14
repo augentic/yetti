@@ -47,6 +47,7 @@ impl qwasr::FromEnv for ConnectOptions {
     }
 }
 
+/// Default implementation for `wasi:http`.
 #[derive(Debug, Clone)]
 pub struct HttpDefault;
 
