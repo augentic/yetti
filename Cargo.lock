@@ -826,6 +826,7 @@ dependencies = [
  "base64ct",
  "bytes",
  "cfg-if",
+ "chrono",
  "http",
  "http-body-util",
  "opentelemetry",
@@ -842,6 +843,7 @@ dependencies = [
  "qwasr-wasi-sql",
  "qwasr-wasi-vault",
  "qwasr-wasi-websockets",
+ "serde",
  "serde_json",
  "tower-http",
  "tracing",
@@ -1411,6 +1413,17 @@ dependencies = [
  "hashbrown 0.16.1",
  "serde",
  "serde_core",
+]
+
+[[package]]
+name = "inherent"
+version = "1.0.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c727f80bfa4a6c6e2508d2f05b6f4bfce242030bd88ed15ae5331c5b5d30fba7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -2158,6 +2171,7 @@ dependencies = [
  "qwasr-wasi-keyvalue",
  "qwasr-wasi-messaging",
  "qwasr-wasi-otel",
+ "qwasr-wasi-sql",
  "serde",
  "serde_json",
  "thiserror 2.0.17",
@@ -2316,11 +2330,13 @@ version = "0.26.0"
 dependencies = [
  "anyhow",
  "base64ct",
+ "chrono",
  "fromenv",
  "futures",
  "parking_lot",
  "qwasr",
  "rusqlite",
+ "sea-query",
  "serde_json",
  "tokio",
  "tracing",
@@ -2834,6 +2850,16 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "sea-query"
+version = "0.32.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a5d1c518eaf5eda38e5773f902b26ab6d5e9e9e2bb2349ca6c64cf96f80448c"
+dependencies = [
+ "chrono",
+ "inherent",
+]
 
 [[package]]
 name = "security-framework"

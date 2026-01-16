@@ -12,12 +12,6 @@ interface types {
         fields: list<field>,
     }
 
-    /// data value with format hint for parsing
-    record formatted-value {
-        value: string,
-        format: string,
-    }
-    
     /// common data types
     variant data-type {
         int32(option<s32>),
@@ -28,9 +22,9 @@ interface types {
         double(option<f64>),
         str(option<string>),
         boolean(option<bool>),
-        date(option<formatted-value>),
-        time(option<formatted-value>),
-        timestamp(option<formatted-value>),
+        date(option<string>),
+        time(option<string>),
+        timestamp(option<string>),
         binary(option<list<u8>>),
     }
 

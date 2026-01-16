@@ -32,6 +32,7 @@ qwasr-wasi-identity.workspace = true
 qwasr-wasi-keyvalue.workspace = true
 qwasr-wasi-messaging.workspace = true
 qwasr-wasi-otel.workspace = true
+qwasr-wasi-sql.workspace = true
 wasip3.workspace = true
 wit-bindgen.workspace = true
 

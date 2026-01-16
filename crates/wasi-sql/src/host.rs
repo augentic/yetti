@@ -41,7 +41,7 @@ use wasmtime_wasi::ResourceTable;
 
 use self::generated::wasi::sql::{readwrite, types};
 pub use crate::host::default_impl::SqlDefault;
-pub use crate::host::generated::wasi::sql::types::{DataType, Field, FormattedValue, Row};
+pub use crate::host::generated::wasi::sql::types::{DataType, Field, Row};
 pub use crate::host::resource::*;
 
 #[derive(Debug)]

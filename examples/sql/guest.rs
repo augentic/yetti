@@ -26,13 +26,16 @@
 
 #![cfg(target_arch = "wasm32")]
 
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use bytes::Bytes;
-use qwasr_sdk::HttpResult;
-use qwasr_wasi_sql::types::{Connection, DataType, FormattedValue, Statement};
-use qwasr_wasi_sql::{into_json, readwrite};
+use chrono::Utc;
+use qwasr_sdk::{HttpResult, OrmDataStore};
+use qwasr_wasi_sql::orm::{InsertBuilder, SelectBuilder};
+use qwasr_wasi_sql::types::{Connection, Statement};
+use qwasr_wasi_sql::{entity, readwrite};
+use serde::Serialize;
 use serde_json::{Value, json};
 use tracing::Level;
 use wasip3::exports::http::handler::Guest;
@@ -56,18 +59,16 @@ impl Guest for Http {
 #[qwasr_wasi_otel::instrument]
 async fn query() -> HttpResult<Json<Value>> {
     tracing::info!("query database");
+    ensure_schema().await?;
 
-    let pool = Connection::open("postgres".to_string())
+    let feeds = SelectBuilder::<Feed>::new()
+        .order_by_desc(None, "feed_id")
+        .limit(100)
+        .fetch(&Provider, "db")
         .await
-        .map_err(|e| anyhow!("failed to open connection: {e:?}"))?;
+        .map_err(|e| anyhow!("failed to fetch feeds: {e:?}"))?;
 
-    let stmt = Statement::prepare("SELECT * from mytable;".to_string(), vec![])
-        .await
-        .map_err(|e| anyhow!("failed to prepare statement: {e:?}"))?;
-
-    let res = readwrite::query(&pool, &stmt).await.map_err(|e| anyhow!("query failed: {e:?}"))?;
-
-    Ok(Json(into_json(res)?))
+    Ok(Json(json!(feeds)))
 }
 
 /// Inserts a new row into the sample table.
@@ -75,34 +76,80 @@ async fn query() -> HttpResult<Json<Value>> {
 #[qwasr_wasi_otel::instrument]
 async fn insert(_body: Bytes) -> HttpResult<Json<Value>> {
     tracing::info!("insert data");
+    ensure_schema().await?;
 
-    let insert = "insert into mytable (feed_id, agency_id, agency_name, agency_url, agency_timezone, created_at) values ($1, $2, $3, $4, $5, $6);";
+    // Get current max feed_id
+    let feeds = SelectBuilder::<Feed>::new()
+        .order_by_desc(None, "feed_id")
+        .limit(1)
+        .fetch(&Provider, "db")
+        .await
+        .map_err(|e| anyhow!("failed to fetch max feed_id: {e:?}"))?;
 
-    let params: Vec<DataType> = [
-        DataType::Int32(Some(1224)),
-        DataType::Str(Some("test1".to_string())),
-        DataType::Str(Some("name1".to_string())),
-        DataType::Str(Some("url1".to_string())),
-        DataType::Str(Some("NZL".to_string())),
-        DataType::Timestamp(Some(FormattedValue {
-            value: "2025-11-06T00:05:30".to_string(),
-            format: "%Y-%m-%dT%H:%M:%S".to_string(),
-        })),
-    ]
-    .to_vec();
+    let next_id = feeds.first().map(|f| f.feed_id + 1).unwrap_or(1);
 
-    tracing::debug!("opening connection");
+    let feed = Feed {
+        feed_id: next_id,
+        agency_id: "test1".to_string(),
+        agency_name: "name1".to_string(),
+        agency_url: Some("url1".to_string()),
+        agency_timezone: Some("NZL".to_string()),
+        created_at: Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+    };
 
+    let query = InsertBuilder::<Feed>::from_entity(&feed)
+        .build()
+        .map_err(|e| anyhow!("failed to build insert query: {e:?}"))?;
+
+    let rows_affected = Provider
+        .exec("db".to_string(), query.sql, query.params)
+        .await
+        .map_err(|e| anyhow!("failed to insert: {e:?}"))?;
+
+    Ok(Json(json!({
+        "message": "inserted",
+        "feed_id": next_id,
+        "rows_affected": rows_affected
+    })))
+}
+
+async fn ensure_schema() -> Result<()> {
     let pool = Connection::open("db".to_string())
         .await
         .map_err(|e| anyhow!("failed to open connection: {e:?}"))?;
-    let stmt = Statement::prepare(insert.to_string(), params)
+
+    let create = r"
+            CREATE TABLE IF NOT EXISTS feed (
+                feed_id INTEGER PRIMARY KEY,
+                agency_id TEXT,
+                agency_name TEXT,
+                agency_url TEXT,
+                agency_timezone TEXT,
+                created_at TEXT
+            );";
+
+    let stmt = Statement::prepare(create.to_string(), vec![])
         .await
-        .map_err(|e| anyhow!("failed to prepare statement: {e:?}"))?;
+        .map_err(|e| anyhow!("failed to create schema: {e:?}"))?;
 
-    let res = readwrite::exec(&pool, &stmt).await.map_err(|e| anyhow!("query failed: {e:?}"))?;
-
-    Ok(Json(json!({
-        "message": res
-    })))
+    readwrite::exec(&pool, &stmt).await.map_err(|e| anyhow!("table creation failed: {e:?}"))?;
+    tracing::debug!("Schema initialized!");
+    Ok(())
 }
+
+entity!(
+    table = "feed",
+    #[derive(Debug, Clone, Serialize)]
+    pub struct Feed {
+        pub feed_id: i64,
+        pub agency_id: String,
+        pub agency_name: String,
+        pub agency_url: Option<String>,
+        pub agency_timezone: Option<String>,
+        pub created_at: String,
+    }
+);
+
+struct Provider;
+
+impl OrmDataStore for Provider {}

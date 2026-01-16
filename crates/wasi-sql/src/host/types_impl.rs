@@ -48,7 +48,8 @@ impl HostStatementWithStore for WasiSql {
 impl HostErrorWithStore for WasiSql {
     fn trace<T>(mut host: Access<'_, T, Self>, self_: Resource<Error>) -> Result<String> {
         let err = host.get().table.get(&self_)?;
-        Ok(err.to_string())
+        let msgs: Vec<String> = err.chain().map(std::string::ToString::to_string).collect();
+        Ok(msgs.join(" -> "))
     }
 
     fn drop<T>(mut accessor: Access<'_, T, Self>, rep: Resource<Error>) -> anyhow::Result<()> {
